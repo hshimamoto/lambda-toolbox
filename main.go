@@ -13,6 +13,10 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
+type Session struct {
+	Outputs []string
+}
+
 type PostRequest struct {
 	Command     string   `json:command`
 	Function    string   `json function,omitempty`
@@ -21,59 +25,66 @@ type PostRequest struct {
 	Sources     []string `json sources,omitempty`
 }
 
-func handleJSONRequest(body []byte) {
+func (s *Session) Logf(f string, args ...interface{}) {
+	out := fmt.Sprintf(f, args...)
+	fmt.Sprintf("%s\n", out)
+	s.Outputs = append(s.Outputs, out)
+}
+
+func (s *Session) handleJSONRequest(body []byte) {
 	var req PostRequest
 	err := json.Unmarshal(body, &req)
 	if err != nil {
-		fmt.Printf("Unmarshal: %v\n", err)
+		s.Logf("Unmarshal: %v", err)
 		return
 	}
 	if req.Command == "s3.concat" {
 		if req.Destination == "" || len(req.Sources) == 0 {
-			fmt.Printf("need destination and sources\n")
+			s.Logf("need destination and sources")
 			return
 		}
 		bucketname := os.Getenv("BUCKET_NAME")
 		if bucketname == "" {
-			fmt.Printf("no bucket\n")
+			s.Logf("no bucket")
 			return
 		}
 		b, err := NewBucket(bucketname)
 		if err != nil {
-			fmt.Printf("NewBucket: %v\n", err)
+			s.Logf("NewBucket: %v", err)
 			return
 		}
 		if err := b.ConcatObjects(req.Destination, req.Sources); err != nil {
-			fmt.Printf("ConcatObjects: %v\n", err)
+			s.Logf("ConcatObjects: %v", err)
 			return
 		}
-		fmt.Printf("concat ok\n")
+		s.Logf("concat ok")
 		return
 	}
 	if req.Command == "lambda.update" {
 		if req.Function == "" || req.Zipfile == "" {
-			fmt.Printf("need function and zipfile\n")
+			s.Logf("need function and zipfile")
 			return
 		}
 		bucketname := os.Getenv("BUCKET_NAME")
 		if bucketname == "" {
-			fmt.Printf("no bucket\n")
+			s.Logf("no bucket")
 			return
 		}
 		if err := LambdaUpdateFunctionCode(req.Function, bucketname, req.Zipfile); err != nil {
-			fmt.Printf("LambdaUpdateFunctionCode: %v\n", err)
+			s.Logf("LambdaUpdateFunctionCode: %v", err)
 			return
 		}
+		s.Logf("update ok")
 		return
 	}
 }
 
-func handleMultipartRequestSubpart(body []byte) {
+func (s *Session) handleMultipartRequestSubpart(body []byte) {
 	// header and content
 	a := bytes.SplitN(body, []byte("\r\n\r\n"), 2)
 	if len(a) != 2 {
 		// no content
-		fmt.Printf("no content\n")
+		s.Logf("no content")
 		return
 	}
 	cdisp := ""
@@ -93,13 +104,13 @@ func handleMultipartRequestSubpart(body []byte) {
 		}
 	}
 	if cdisp == "" {
-		fmt.Printf("no Disposition\n")
+		s.Logf("no Disposition")
 		return
 	}
-	fmt.Printf("type: %s disp: %s\n", ctype, cdisp)
+	s.Logf("type: %s, disp: %s", ctype, cdisp)
 	a_disp := strings.Split(cdisp, "; ")
 	if a_disp[0] != "form-data" {
-		fmt.Printf("unknown Disposition\n")
+		s.Logf("unknown Disposition")
 		return
 	}
 	name := ""
@@ -122,48 +133,48 @@ func handleMultipartRequestSubpart(body []byte) {
 			filename = val
 		}
 	}
-	fmt.Printf("name = %s, filename = %s\n", name, filename)
+	s.Logf("name = %s, filename = %s", name, filename)
 	if name != "file" {
-		fmt.Printf("unknown name = %s\n", name)
+		s.Logf("unknown name = %s", name)
 		return
 	}
 	// put it in tmp
 	bucketname := os.Getenv("BUCKET_NAME")
 	if bucketname == "" {
-		fmt.Printf("no bucket\n")
+		s.Logf("no bucket")
 		return
 	}
 	b, err := NewBucket(bucketname)
 	if err != nil {
-		fmt.Printf("NewBucket: %v\n", err)
+		s.Logf("NewBucket: %v", err)
 		return
 	}
 	if filename == "" {
-		fmt.Printf("no filename\n")
+		s.Logf("no filename")
 		return
 	}
 	if err := b.Put("tmp/"+filename, a[1]); err != nil {
-		fmt.Printf("S3 Put: %v", err)
+		s.Logf("S3Put: %v", err)
 		return
 	}
 }
 
-func handleMultipartRequest(boundary string, body []byte) {
+func (s *Session) handleMultipartRequest(boundary string, body []byte) {
 	for n, part := range bytes.Split(body, []byte(boundary)) {
-		fmt.Printf("part %d\n", n)
-		handleMultipartRequestSubpart(part)
+		s.Logf("part %d", n)
+		s.handleMultipartRequestSubpart(part)
 	}
 }
 
-// Invoke from Lambda URL
-func Handler(req events.LambdaFunctionURLRequest) (string, error) {
-	fmt.Println(req)
+func (s *Session) handle(req events.LambdaFunctionURLRequest) {
 	switch req.RequestContext.HTTP.Method {
 	case "GET":
-		return "Lambda works\n", nil
+		s.Logf("Lambda works")
+		return
 	case "POST": // do nothing
 	default:
-		return "Unknown request\n", nil
+		s.Logf("Unknown request")
+		return
 	}
 	rawbody := []byte(req.Body)
 	if req.IsBase64Encoded {
@@ -171,18 +182,28 @@ func Handler(req events.LambdaFunctionURLRequest) (string, error) {
 	}
 	ctype, ok := req.Headers["content-type"]
 	if !ok {
-		return "No Content-Type\n", nil
+		s.Logf("No Content-Type")
+		return
 	}
 	if ctype == "application/json" {
-		handleJSONRequest(rawbody)
-		return "Done\n", nil
+		s.handleJSONRequest(rawbody)
+		return
 	}
 	if strings.Index(ctype, "multipart/form-data; boundary=") == 0 {
 		boundary := strings.Split(ctype, "boundary=")[1]
-		handleMultipartRequest("--"+boundary, rawbody)
-		return "Multipart Done\n", nil
+		s.handleMultipartRequest("--"+boundary, rawbody)
+		return
 	}
-	return "Unknown Content-Type: " + ctype + "\n", nil
+	s.Logf("Unknown Content-Type: %s", ctype)
+}
+
+// Invoke from Lambda URL
+func Handler(req events.LambdaFunctionURLRequest) (string, error) {
+	fmt.Println(req)
+	s := &Session{}
+	s.Logf("start handler")
+	s.handle(req)
+	return strings.Join(s.Outputs, "\n") + "\n", nil
 }
 
 func main() {
