@@ -8,9 +8,11 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 )
 
 type Session struct {
@@ -31,12 +33,16 @@ func NewSession() *Session {
 }
 
 type PostRequest struct {
-	Command     string   `json:command`
-	Function    string   `json function,omitempty`
-	Zipfile     string   `json zipfile,omitempty`
-	Destination string   `json destination,omitempty`
-	Sources     []string `json sources,omitempty`
-	VpcId       string   `json vpcid,omitempty`
+	Command          string   `json:command`
+	Function         string   `json function,omitempty`
+	Zipfile          string   `json zipfile,omitempty`
+	Destination      string   `json destination,omitempty`
+	Sources          []string `json sources,omitempty`
+	VpcId            string   `json vpcid,omitempty`
+	ImageId          string   `json imageid,omitempty`
+	InstanceType     string   `json instancetype,omitempty`
+	SecurityGroupIds []string `json securitygroupids,omitempty`
+	Name             string   `json name,omitempty`
 }
 
 func (s *Session) Logf(f string, args ...interface{}) {
@@ -69,6 +75,47 @@ func (s *Session) handleJSONRequest(body []byte) {
 		}
 		for _, inst := range instances {
 			s.Logf("%s", EC2InstanceString(inst))
+		}
+		return
+	}
+	if req.Command == "ec2.spotrequest" {
+		cli, err := NewEC2Client()
+		if err != nil {
+			s.Logf("NewEC2Client: %v", err)
+			return
+		}
+		spec := &types.RequestSpotLaunchSpecification{
+			ImageId:          &req.ImageId,
+			InstanceType:     EC2InstanceType(req.InstanceType),
+			SecurityGroupIds: req.SecurityGroupIds,
+		}
+		sirs, err := cli.RequestSpotInstances(1, spec)
+		if err != nil {
+			s.Logf("RequestSpotInstances: %v", err)
+			return
+		}
+		ids := []string{}
+		for _, sir := range sirs {
+			s.Logf("id=%s", *sir.SpotInstanceRequestId)
+			ids = append(ids, *sir.SpotInstanceRequestId)
+		}
+		for {
+			sirs, err = cli.DescribeSpotInstanceRequests(ids)
+			if err != nil {
+				s.Logf("DescribeSpotInstanceRequests: %v", err)
+				return
+			}
+			fullfilled := true
+			for _, sir := range sirs {
+				if sir.InstanceId == nil {
+					s.Logf("%s is not fullfilled", *sir.SpotInstanceRequestId)
+					fullfilled = false
+				}
+			}
+			if fullfilled {
+				break
+			}
+			time.Sleep(time.Second)
 		}
 		return
 	}

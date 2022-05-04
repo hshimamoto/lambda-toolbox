@@ -46,3 +46,43 @@ func (cli *EC2Client) DescribeInstances() ([]types.Instance, error) {
 	}
 	return instances, nil
 }
+
+func (cli *EC2Client) RequestSpotInstances(count int32, spec *types.RequestSpotLaunchSpecification) ([]types.SpotInstanceRequest, error) {
+	tag := func(key, val string) types.Tag {
+		tagKey := key
+		tagValue := val
+		return types.Tag{
+			Key:   &tagKey,
+			Value: &tagValue,
+		}
+	}
+	tags := []types.Tag{
+		tag("lambda-toolbox", "yes"),
+	}
+	input := &ec2.RequestSpotInstancesInput{
+		InstanceCount:       &count,
+		LaunchSpecification: spec,
+		TagSpecifications: []types.TagSpecification{
+			types.TagSpecification{
+				ResourceType: types.ResourceTypeSpotInstancesRequest,
+				Tags:         tags,
+			},
+		},
+	}
+	output, err := cli.client.RequestSpotInstances(context.TODO(), input)
+	if err != nil {
+		return nil, err
+	}
+	return output.SpotInstanceRequests, nil
+}
+
+func (cli *EC2Client) DescribeSpotInstanceRequests(ids []string) ([]types.SpotInstanceRequest, error) {
+	input := &ec2.DescribeSpotInstanceRequestsInput{
+		SpotInstanceRequestIds: ids,
+	}
+	output, err := cli.client.DescribeSpotInstanceRequests(context.TODO(), input)
+	if err != nil {
+		return nil, err
+	}
+	return output.SpotInstanceRequests, nil
+}

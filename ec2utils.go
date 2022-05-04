@@ -36,3 +36,15 @@ func EC2InstanceString(i types.Instance) string {
 		*i.InstanceId, name, i.State.Name, pubip,
 		strings.Join(vals, ","))
 }
+
+func EC2InstanceType(key string) types.InstanceType {
+	itypes := map[string]types.InstanceType{
+		"t3.nano":  types.InstanceTypeT3Nano,
+		"t3a.nano": types.InstanceTypeT3aNano,
+		"t4g.nano": types.InstanceTypeT4gNano,
+	}
+	if itype, ok := itypes[key]; ok {
+		return itype
+	}
+	return types.InstanceTypeT3Nano
+}
