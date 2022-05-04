@@ -169,6 +169,20 @@ func (s *Session) handle(req events.LambdaFunctionURLRequest) {
 		s.Logf("Unknown request")
 		return
 	}
+	// IP check
+	sourceip := req.RequestContext.HTTP.SourceIP
+	allowed := os.Getenv("ALLOWED_IPS")
+	deny := true
+	for _, ip := range strings.Split(allowed, ",") {
+		if sourceip == strings.TrimSpace(ip) {
+			deny = false
+			break
+		}
+	}
+	if deny {
+		s.Logf("SourceIP: %s is NOT allowed", sourceip)
+		return
+	}
 	rawbody := []byte(req.Body)
 	if req.IsBase64Encoded {
 		rawbody, _ = base64.StdEncoding.DecodeString(req.Body)
