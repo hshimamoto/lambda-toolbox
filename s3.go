@@ -4,6 +4,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -16,6 +17,9 @@ type Bucket struct {
 }
 
 func NewBucket(name string) (*Bucket, error) {
+	if name == "" {
+		return nil, fmt.Errorf("empty name")
+	}
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		return nil, err

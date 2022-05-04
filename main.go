@@ -15,6 +15,19 @@ import (
 
 type Session struct {
 	Outputs []string
+	Bucket  *Bucket
+}
+
+func NewSession() *Session {
+	bucketname := os.Getenv("BUCKET_NAME")
+	s := &Session{}
+	b, err := NewBucket(bucketname)
+	if err != nil {
+		s.Logf("NewBucket: %v", err)
+		// ignore error at this point
+	}
+	s.Bucket = b
+	return s
 }
 
 type PostRequest struct {
@@ -43,17 +56,7 @@ func (s *Session) handleJSONRequest(body []byte) {
 			s.Logf("need destination and sources")
 			return
 		}
-		bucketname := os.Getenv("BUCKET_NAME")
-		if bucketname == "" {
-			s.Logf("no bucket")
-			return
-		}
-		b, err := NewBucket(bucketname)
-		if err != nil {
-			s.Logf("NewBucket: %v", err)
-			return
-		}
-		if err := b.ConcatObjects(req.Destination, req.Sources); err != nil {
+		if err := s.Bucket.ConcatObjects(req.Destination, req.Sources); err != nil {
 			s.Logf("ConcatObjects: %v", err)
 			return
 		}
@@ -139,21 +142,11 @@ func (s *Session) handleMultipartRequestSubpart(body []byte) {
 		return
 	}
 	// put it in tmp
-	bucketname := os.Getenv("BUCKET_NAME")
-	if bucketname == "" {
-		s.Logf("no bucket")
-		return
-	}
-	b, err := NewBucket(bucketname)
-	if err != nil {
-		s.Logf("NewBucket: %v", err)
-		return
-	}
 	if filename == "" {
 		s.Logf("no filename")
 		return
 	}
-	if err := b.Put("tmp/"+filename, a[1]); err != nil {
+	if err := s.Bucket.Put("tmp/"+filename, a[1]); err != nil {
 		s.Logf("S3Put: %v", err)
 		return
 	}
@@ -200,7 +193,7 @@ func (s *Session) handle(req events.LambdaFunctionURLRequest) {
 // Invoke from Lambda URL
 func Handler(req events.LambdaFunctionURLRequest) (string, error) {
 	fmt.Println(req)
-	s := &Session{}
+	s := NewSession()
 	s.Logf("start handler")
 	s.handle(req)
 	return strings.Join(s.Outputs, "\n") + "\n", nil
