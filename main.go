@@ -36,6 +36,7 @@ type PostRequest struct {
 	Zipfile     string   `json zipfile,omitempty`
 	Destination string   `json destination,omitempty`
 	Sources     []string `json sources,omitempty`
+	VpcId       string   `json vpcid,omitempty`
 }
 
 func (s *Session) Logf(f string, args ...interface{}) {
@@ -49,6 +50,24 @@ func (s *Session) handleJSONRequest(body []byte) {
 	err := json.Unmarshal(body, &req)
 	if err != nil {
 		s.Logf("Unmarshal: %v", err)
+		return
+	}
+	if req.Command == "ec2.describe" {
+		cli, err := NewEC2Client()
+		if err != nil {
+			s.Logf("NewEC2Client: %v", err)
+			return
+		}
+		cli.VpcId = req.VpcId
+		if cli.VpcId != "" {
+			s.Logf("VpcId: %s", cli.VpcId)
+		}
+		result, err := cli.DescribeInstances()
+		if err != nil {
+			s.Logf("Describe: %v", err)
+			return
+		}
+		s.Logf("%s", result)
 		return
 	}
 	if req.Command == "s3.concat" {
