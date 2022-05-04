@@ -62,12 +62,14 @@ func (s *Session) handleJSONRequest(body []byte) {
 		if cli.VpcId != "" {
 			s.Logf("VpcId: %s", cli.VpcId)
 		}
-		result, err := cli.DescribeInstances()
+		instances, err := cli.DescribeInstances()
 		if err != nil {
 			s.Logf("Describe: %v", err)
 			return
 		}
-		s.Logf("%s", result)
+		for _, inst := range instances {
+			s.Logf("%s", EC2InstanceString(inst))
+		}
 		return
 	}
 	if req.Command == "s3.concat" {

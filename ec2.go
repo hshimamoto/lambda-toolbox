@@ -3,7 +3,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
@@ -26,7 +25,7 @@ func NewEC2Client() (*EC2Client, error) {
 	return client, nil
 }
 
-func (cli *EC2Client) DescribeInstances() (string, error) {
+func (cli *EC2Client) DescribeInstances() ([]types.Instance, error) {
 	// create filter
 	input := &ec2.DescribeInstancesInput{}
 	if cli.VpcId != "" {
@@ -39,13 +38,11 @@ func (cli *EC2Client) DescribeInstances() (string, error) {
 	}
 	output, err := cli.client.DescribeInstances(context.TODO(), input)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	result := ""
+	instances := []types.Instance{}
 	for _, r := range output.Reservations {
-		for _, i := range r.Instances {
-			result += fmt.Sprintf("%s\n", *i.InstanceId)
-		}
+		instances = append(instances, r.Instances...)
 	}
-	return result, nil
+	return instances, nil
 }
