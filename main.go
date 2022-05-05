@@ -43,6 +43,7 @@ type PostRequest struct {
 	InstanceType     string   `json instancetype,omitempty`
 	SecurityGroupIds []string `json securitygroupids,omitempty`
 	Name             string   `json name,omitempty`
+	ExecCommand      string   `json execcommand,omitempty`
 }
 
 func (s *Session) Logf(f string, args ...interface{}) {
@@ -179,6 +180,19 @@ func (s *Session) doExecCommand(req PostRequest) {
 		lines, err := ExecListFiles("/tmp")
 		if err != nil {
 			s.Logf("ListFiles: %v", err)
+			return
+		}
+		for _, line := range lines {
+			s.Logf("%s", line)
+		}
+	case "run":
+		if req.ExecCommand == "" {
+			s.Logf("no execcommand")
+			return
+		}
+		lines, err := ExecRun(req.ExecCommand)
+		if err != nil {
+			s.Logf("Run: %v", err)
 			return
 		}
 		for _, line := range lines {
