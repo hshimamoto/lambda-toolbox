@@ -120,18 +120,10 @@ func (s *Session) doEC2Command(req PostRequest) {
 	}
 }
 
-func (s *Session) handleJSONRequest(body []byte) {
-	var req PostRequest
-	err := json.Unmarshal(body, &req)
-	if err != nil {
-		s.Logf("Unmarshal: %v", err)
-		return
-	}
-	if req.Command[0:4] == "ec2." {
-		s.doEC2Command(req)
-		return
-	}
-	if req.Command == "s3.concat" {
+func (s *Session) doS3Command(req PostRequest) {
+	cmd := req.Command[3:]
+	switch cmd {
+	case "concat":
 		if req.Destination == "" || len(req.Sources) == 0 {
 			s.Logf("need destination and sources")
 			return
@@ -141,9 +133,13 @@ func (s *Session) handleJSONRequest(body []byte) {
 			return
 		}
 		s.Logf("concat ok")
-		return
 	}
-	if req.Command == "lambda.update" {
+}
+
+func (s *Session) doLambdaCommand(req PostRequest) {
+	cmd := req.Command[7:]
+	switch cmd {
+	case "update":
 		if req.Function == "" || req.Zipfile == "" {
 			s.Logf("need function and zipfile")
 			return
@@ -158,6 +154,26 @@ func (s *Session) handleJSONRequest(body []byte) {
 			return
 		}
 		s.Logf("update ok")
+	}
+}
+
+func (s *Session) handleJSONRequest(body []byte) {
+	var req PostRequest
+	err := json.Unmarshal(body, &req)
+	if err != nil {
+		s.Logf("Unmarshal: %v", err)
+		return
+	}
+	if req.Command[0:4] == "ec2." {
+		s.doEC2Command(req)
+		return
+	}
+	if req.Command[0:3] == "s3." {
+		s.doS3Command(req)
+		return
+	}
+	if req.Command[0:7] == "lambda." {
+		s.doLambdaCommand(req)
 		return
 	}
 }
