@@ -350,10 +350,12 @@ func (s *Session) handle(req events.LambdaFunctionURLRequest) {
 
 // Invoke from Lambda URL
 func Handler(req events.LambdaFunctionURLRequest) (string, error) {
+	start := time.Now()
 	fmt.Println(req)
 	s := NewSession()
 	s.Logf("start handler")
 	s.handle(req)
+	s.Logf("end handler (%v)", time.Since(start))
 	return strings.Join(s.Outputs, "\n") + "\n", nil
 }
 
