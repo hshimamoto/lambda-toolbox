@@ -76,7 +76,7 @@ func (s *Session) doEC2Command(req PostRequest) {
 	case "spotrequest":
 		spec := &types.RequestSpotLaunchSpecification{
 			ImageId:          &req.ImageId,
-			InstanceType:     EC2InstanceType(req.InstanceType),
+			InstanceType:     types.InstanceType(req.InstanceType),
 			SecurityGroupIds: req.SecurityGroupIds,
 		}
 		sirs, err := cli.RequestSpotInstances(1, spec)
