@@ -32,8 +32,8 @@ func EC2InstanceString(i types.Instance) string {
 	for _, k := range keys {
 		vals = append(vals, fmt.Sprintf("%s:%s", k, tags[k]))
 	}
-	return fmt.Sprintf("%s:%s:%s:%s:[%s]",
-		*i.InstanceId, name, i.State.Name, pubip,
+	return fmt.Sprintf("%s:%s:%s:%s:%s:[%s]",
+		*i.InstanceId, name, i.InstanceType, i.State.Name, pubip,
 		strings.Join(vals, ","))
 }
 
