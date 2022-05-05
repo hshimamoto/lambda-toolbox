@@ -25,6 +25,27 @@ func NewEC2Client() (*EC2Client, error) {
 	return client, nil
 }
 
+func (cli *EC2Client) CreateTags(id string, kvs map[string]string) error {
+	tag := func(key, val string) types.Tag {
+		tagKey := key
+		tagValue := val
+		return types.Tag{
+			Key:   &tagKey,
+			Value: &tagValue,
+		}
+	}
+	tags := []types.Tag{}
+	for k, v := range kvs {
+		tags = append(tags, tag(k, v))
+	}
+	input := &ec2.CreateTagsInput{
+		Resources: []string{id},
+		Tags:      tags,
+	}
+	_, err := cli.client.CreateTags(context.TODO(), input)
+	return err
+}
+
 func (cli *EC2Client) DescribeInstances() ([]types.Instance, error) {
 	// create filter
 	input := &ec2.DescribeInstancesInput{}

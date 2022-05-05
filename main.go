@@ -117,6 +117,17 @@ func (s *Session) handleJSONRequest(body []byte) {
 			}
 			time.Sleep(time.Second)
 		}
+		// setup tag
+		kvs := map[string]string{
+			"lambda-toolbox": "yes",
+			"Name":           req.Name,
+		}
+		for _, sir := range sirs {
+			if err := cli.CreateTags(*sir.InstanceId, kvs); err != nil {
+				s.Logf("CreateTags: %v", err)
+				// ignore error
+			}
+		}
 		return
 	}
 	if req.Command == "s3.concat" {
