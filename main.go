@@ -328,7 +328,7 @@ func (s *Session) handle(req events.LambdaFunctionURLRequest) {
 	}
 	if strings.Index(ctype, "multipart/form-data; boundary=") == 0 {
 		boundary := strings.Split(ctype, "boundary=")[1]
-		s.handleMultipartRequest("--"+boundary, rawbody)
+		s.handleMultipartRequest("\r\n--"+boundary, rawbody)
 		return
 	}
 	s.Logf("Unknown Content-Type: %s", ctype)
