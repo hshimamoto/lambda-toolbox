@@ -41,6 +41,7 @@ type PostRequest struct {
 	VpcId            string   `json vpcid,omitempty`
 	ImageId          string   `json imageid,omitempty`
 	InstanceType     string   `json instancetype,omitempty`
+	KeyName          string   `json keyname,omitempty`
 	SecurityGroupIds []string `json securitygroupids,omitempty`
 	Name             string   `json name,omitempty`
 	ExecCommand      string   `json execcommand,omitempty`
@@ -94,6 +95,7 @@ func (s *Session) doEC2Command(req PostRequest) {
 		spec := &types.RequestSpotLaunchSpecification{
 			ImageId:          &req.ImageId,
 			InstanceType:     types.InstanceType(req.InstanceType),
+			KeyName:          &req.KeyName,
 			SecurityGroupIds: req.SecurityGroupIds,
 		}
 		sirs, err := cli.RequestSpotInstances(1, spec)
