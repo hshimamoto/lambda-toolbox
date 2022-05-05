@@ -176,6 +176,10 @@ func (s *Session) doLambdaCommand(req PostRequest) {
 }
 
 func (s *Session) doExecCommand(req PostRequest) {
+	dir := req.Destination
+	if dir == "" {
+		dir = "/tmp"
+	}
 	cmd := req.Command[5:]
 	switch cmd {
 	case "unzip":
@@ -188,13 +192,13 @@ func (s *Session) doExecCommand(req PostRequest) {
 			s.Logf("S3Get: %v", err)
 			return
 		}
-		if err := Unzip(obj, "/tmp"); err != nil {
+		if err := Unzip(obj, dir); err != nil {
 			s.Logf("Unzip: %v", err)
 			return
 		}
 		s.Logf("Unzip: ok")
 	case "files":
-		lines, err := ExecListFiles("/tmp")
+		lines, err := ExecListFiles(dir)
 		if err != nil {
 			s.Logf("ListFiles: %v", err)
 			return
