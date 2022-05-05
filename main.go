@@ -44,6 +44,8 @@ type PostRequest struct {
 	SecurityGroupIds []string `json securitygroupids,omitempty`
 	Name             string   `json name,omitempty`
 	ExecCommand      string   `json execcommand,omitempty`
+	Arch             string   `json arch,omitempty`
+	Distro           string   `json distro,omitempty`
 }
 
 func (s *Session) Logf(f string, args ...interface{}) {
@@ -60,6 +62,21 @@ func (s *Session) doEC2Command(req PostRequest) {
 	}
 	cmd := req.Command[4:]
 	switch cmd {
+	case "images":
+		distro := req.Distro
+		arch := req.Arch
+		if distro == "" {
+			distro = "amazon"
+		}
+		if arch == "" {
+			arch = "x86_64"
+		}
+		image, err := cli.GetImage(distro, arch)
+		if err != nil {
+			s.Logf("GetImage: %v", err)
+			return
+		}
+		s.Logf("%s", EC2ImageString(image))
 	case "describe":
 		cli.VpcId = req.VpcId
 		if cli.VpcId != "" {

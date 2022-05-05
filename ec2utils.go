@@ -36,3 +36,35 @@ func EC2InstanceString(i types.Instance) string {
 		*i.InstanceId, name, i.InstanceType, i.State.Name, pubip,
 		strings.Join(vals, ","))
 }
+
+func EC2ImageString(i types.Image) string {
+	return fmt.Sprintf("%s:%s:%s",
+		*i.ImageId, *i.Name, *i.Description)
+}
+
+func (cli *EC2Client) GetImage(distro, arch string) (types.Image, error) {
+	name := ""
+	owner := ""
+	switch distro {
+	case "amazon":
+		name = "amzn2-ami-kernel-*-hvm-*-gp2"
+		owner = "amazon"
+	case "ubuntu":
+		name = "ubuntu/*-20.04-*"
+		owner = "099720109477"
+	}
+	if name == "" || owner == "" {
+		return types.Image{}, fmt.Errorf("no name or owner")
+	}
+	images, err := cli.DescribeImages(owner, arch, name)
+	if err != nil {
+		return types.Image{}, err
+	}
+	if len(images) == 0 {
+		return types.Image{}, fmt.Errorf("no images")
+	}
+	sort.Slice(images, func(a, b int) bool {
+		return *images[a].CreationDate > *images[b].CreationDate
+	})
+	return images[0], nil
+}

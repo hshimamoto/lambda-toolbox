@@ -107,3 +107,21 @@ func (cli *EC2Client) DescribeSpotInstanceRequests(ids []string) ([]types.SpotIn
 	}
 	return output.SpotInstanceRequests, nil
 }
+
+func (cli *EC2Client) DescribeImages(owner, arch, name string) ([]types.Image, error) {
+	filter := func(key, val string) types.Filter {
+		return types.Filter{Name: &key, Values: []string{val}}
+	}
+	input := &ec2.DescribeImagesInput{
+		Owners: []string{owner},
+		Filters: []types.Filter{
+			filter("architecture", arch),
+			filter("name", name),
+		},
+	}
+	output, err := cli.client.DescribeImages(context.TODO(), input)
+	if err != nil {
+		return nil, err
+	}
+	return output.Images, nil
+}
