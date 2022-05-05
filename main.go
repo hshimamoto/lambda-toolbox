@@ -2,11 +2,15 @@
 package main
 
 import (
+	"archive/zip"
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -133,6 +137,43 @@ func (s *Session) doS3Command(req PostRequest) {
 			return
 		}
 		s.Logf("concat ok")
+	case "unzip":
+		if req.Zipfile == "" {
+			s.Logf("need zipfile")
+		}
+		obj, err := s.Bucket.Get(req.Zipfile)
+		if err != nil {
+			s.Logf("S3Get: %v", err)
+			return
+		}
+		reader := bytes.NewReader(obj)
+		zipreader, err := zip.NewReader(reader, int64(len(obj)))
+		if err != nil {
+			s.Logf("NewReader: %v", err)
+			return
+		}
+		// unzip to /tmp/load
+		for _, f := range zipreader.File {
+			if strings.Index(f.Name, "..") != -1 {
+				s.Logf("bad name %s", f.Name)
+				continue
+			}
+			zipf, err := f.Open()
+			if err != nil {
+				s.Logf("Open: %v", err)
+				continue
+			}
+			newpath := filepath.Join("/tmp", f.Name)
+			newf, err := os.OpenFile(newpath, os.O_WRONLY|os.O_CREATE, f.Mode())
+			if err != nil {
+				s.Logf("OpenFile: %v", err)
+				zipf.Close()
+				continue
+			}
+			io.Copy(newf, zipf)
+			newf.Close()
+			zipf.Close()
+		}
 	}
 }
 
@@ -157,6 +198,23 @@ func (s *Session) doLambdaCommand(req PostRequest) {
 	}
 }
 
+func (s *Session) doTmpCommand(req PostRequest) {
+	cmd := req.Command[4:]
+	switch cmd {
+	case "files":
+		// show
+		cmd := exec.Command("ls", "-l", "/tmp")
+		output, err := cmd.Output()
+		if err != nil {
+			s.Logf("Output: %v", err)
+			return
+		}
+		for _, l := range strings.Split(string(output), "\n") {
+			s.Logf("%s", l)
+		}
+	}
+}
+
 func (s *Session) handleJSONRequest(body []byte) {
 	var req PostRequest
 	err := json.Unmarshal(body, &req)
@@ -174,6 +232,10 @@ func (s *Session) handleJSONRequest(body []byte) {
 	}
 	if req.Command[0:7] == "lambda." {
 		s.doLambdaCommand(req)
+		return
+	}
+	if req.Command[0:4] == "tmp." {
+		s.doTmpCommand(req)
 		return
 	}
 }
