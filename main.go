@@ -51,19 +51,15 @@ func (s *Session) Logf(f string, args ...interface{}) {
 	s.Outputs = append(s.Outputs, out)
 }
 
-func (s *Session) handleJSONRequest(body []byte) {
-	var req PostRequest
-	err := json.Unmarshal(body, &req)
+func (s *Session) doEC2Command(req PostRequest) {
+	cli, err := NewEC2Client()
 	if err != nil {
-		s.Logf("Unmarshal: %v", err)
+		s.Logf("NewEC2Client: %v", err)
 		return
 	}
-	if req.Command == "ec2.describe" {
-		cli, err := NewEC2Client()
-		if err != nil {
-			s.Logf("NewEC2Client: %v", err)
-			return
-		}
+	cmd := req.Command[4:]
+	switch cmd {
+	case "describe":
 		cli.VpcId = req.VpcId
 		if cli.VpcId != "" {
 			s.Logf("VpcId: %s", cli.VpcId)
@@ -76,14 +72,7 @@ func (s *Session) handleJSONRequest(body []byte) {
 		for _, inst := range instances {
 			s.Logf("%s", EC2InstanceString(inst))
 		}
-		return
-	}
-	if req.Command == "ec2.spotrequest" {
-		cli, err := NewEC2Client()
-		if err != nil {
-			s.Logf("NewEC2Client: %v", err)
-			return
-		}
+	case "spotrequest":
 		spec := &types.RequestSpotLaunchSpecification{
 			ImageId:          &req.ImageId,
 			InstanceType:     EC2InstanceType(req.InstanceType),
@@ -128,6 +117,18 @@ func (s *Session) handleJSONRequest(body []byte) {
 				// ignore error
 			}
 		}
+	}
+}
+
+func (s *Session) handleJSONRequest(body []byte) {
+	var req PostRequest
+	err := json.Unmarshal(body, &req)
+	if err != nil {
+		s.Logf("Unmarshal: %v", err)
+		return
+	}
+	if req.Command[0:4] == "ec2." {
+		s.doEC2Command(req)
 		return
 	}
 	if req.Command == "s3.concat" {
