@@ -42,6 +42,19 @@ func EC2ImageString(i types.Image) string {
 		*i.ImageId, *i.Name, *i.Description)
 }
 
+func EC2BlockDeviceMappings(volsz int32, voltype string) []types.BlockDeviceMapping {
+	devname := "/dev/sda1"
+	return []types.BlockDeviceMapping{
+		types.BlockDeviceMapping{
+			DeviceName: &devname,
+			Ebs: &types.EbsBlockDevice{
+				VolumeSize: &volsz,
+				VolumeType: types.VolumeType(voltype),
+			},
+		},
+	}
+}
+
 func (cli *EC2Client) GetImage(distro, arch string) (types.Image, error) {
 	name := ""
 	owner := ""

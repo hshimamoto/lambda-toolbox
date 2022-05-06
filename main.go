@@ -93,10 +93,11 @@ func (s *Session) doEC2Command(req PostRequest) {
 		}
 	case "spotrequest":
 		spec := &types.RequestSpotLaunchSpecification{
-			ImageId:          &req.ImageId,
-			InstanceType:     types.InstanceType(req.InstanceType),
-			KeyName:          &req.KeyName,
-			SecurityGroupIds: req.SecurityGroupIds,
+			BlockDeviceMappings: EC2BlockDeviceMappings(40, "gp3"),
+			ImageId:             &req.ImageId,
+			InstanceType:        types.InstanceType(req.InstanceType),
+			KeyName:             &req.KeyName,
+			SecurityGroupIds:    req.SecurityGroupIds,
 		}
 		sirs, err := cli.RequestSpotInstances(1, spec)
 		if err != nil {
