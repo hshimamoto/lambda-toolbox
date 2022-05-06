@@ -92,8 +92,10 @@ func (s *Session) doEC2Command(req PostRequest) {
 			s.Logf("%s", EC2InstanceString(inst))
 		}
 	case "spotrequest":
+		ebsoptimized := true
 		spec := &types.RequestSpotLaunchSpecification{
 			BlockDeviceMappings: EC2BlockDeviceMappings(40, "gp3"),
+			EbsOptimized:        &ebsoptimized,
 			ImageId:             &req.ImageId,
 			InstanceType:        types.InstanceType(req.InstanceType),
 			KeyName:             &req.KeyName,
