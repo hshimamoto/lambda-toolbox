@@ -111,11 +111,17 @@ func (s *Session) doEC2Command(req PostRequest) {
 			s.Logf("id=%s", *sir.SpotInstanceRequestId)
 			ids = append(ids, *sir.SpotInstanceRequestId)
 		}
+		first := true
 		for {
 			sirs, err = cli.DescribeSpotInstanceRequests(ids)
 			if err != nil {
 				s.Logf("DescribeSpotInstanceRequests: %v", err)
-				return
+				if !first {
+					return
+				}
+				first = false
+				time.Sleep(time.Second)
+				continue
 			}
 			fullfilled := true
 			for _, sir := range sirs {
