@@ -93,7 +93,11 @@ func (s *Session) doEC2Command(req PostRequest) {
 			s.Logf("%s", EC2InstanceString(inst))
 		}
 	case "spotrequest":
+		var keyname *string = nil
 		var userdata *string = nil
+		if req.KeyName != "" {
+			keyname = &req.KeyName
+		}
 		if req.UserDataFile != "" {
 			obj, err := s.Bucket.Get(req.UserDataFile)
 			if err != nil {
@@ -109,7 +113,7 @@ func (s *Session) doEC2Command(req PostRequest) {
 			EbsOptimized:        &ebsoptimized,
 			ImageId:             &req.ImageId,
 			InstanceType:        types.InstanceType(req.InstanceType),
-			KeyName:             &req.KeyName,
+			KeyName:             keyname,
 			SecurityGroupIds:    req.SecurityGroupIds,
 			UserData:            userdata,
 		}
