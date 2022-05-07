@@ -43,6 +43,7 @@ type PostRequest struct {
 	InstanceType     string   `json instancetype,omitempty`
 	KeyName          string   `json keyname,omitempty`
 	SecurityGroupIds []string `json securitygroupids,omitempty`
+	UserDataFile     string   `json userdatafile,omitempty`
 	Name             string   `json name,omitempty`
 	ExecCommand      string   `json execcommand,omitempty`
 	Arch             string   `json arch,omitempty`
@@ -92,6 +93,16 @@ func (s *Session) doEC2Command(req PostRequest) {
 			s.Logf("%s", EC2InstanceString(inst))
 		}
 	case "spotrequest":
+		var userdata *string = nil
+		if req.UserDataFile != "" {
+			obj, err := s.Bucket.Get(req.UserDataFile)
+			if err != nil {
+				s.Logf("UserDataFile: %v", err)
+				return
+			}
+			data := base64.StdEncoding.EncodeToString(obj)
+			userdata = &data
+		}
 		ebsoptimized := true
 		spec := &types.RequestSpotLaunchSpecification{
 			BlockDeviceMappings: EC2BlockDeviceMappings(40, "gp3"),
@@ -100,6 +111,7 @@ func (s *Session) doEC2Command(req PostRequest) {
 			InstanceType:        types.InstanceType(req.InstanceType),
 			KeyName:             &req.KeyName,
 			SecurityGroupIds:    req.SecurityGroupIds,
+			UserData:            userdata,
 		}
 		sirs, err := cli.RequestSpotInstances(1, spec)
 		if err != nil {
