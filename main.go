@@ -77,7 +77,15 @@ func (s *Session) getFile(filename string) ([]byte, error) {
 	return nil, fmt.Errorf("%s is not found: (%v) (%v)", filename, err0, err1)
 }
 
-func (s *Session) doEC2RequestSpotInstances(cli *EC2Client, req PostRequest) {
+type EC2InstanceSpec struct {
+	ImageId          string
+	SecurityGroupIds []string
+	InstanceType     string
+	KeyName          *string
+	UserData         *string
+}
+
+func (s *Session) newEC2InstanceSpec(req PostRequest) (*EC2InstanceSpec, error) {
 	var keyname *string = nil
 	var userdata *string = nil
 	if req.KeyName != "" {
@@ -86,21 +94,35 @@ func (s *Session) doEC2RequestSpotInstances(cli *EC2Client, req PostRequest) {
 	if req.UserDataFile != "" {
 		obj, err := s.getFile(req.UserDataFile)
 		if err != nil {
-			s.Logf("UserDataFile: %v", err)
-			return
+			return nil, fmt.Errorf("UserDataFile: %v", err)
 		}
 		data := base64.StdEncoding.EncodeToString(obj)
 		userdata = &data
+	}
+	return &EC2InstanceSpec{
+		ImageId:          req.ImageId,
+		SecurityGroupIds: req.SecurityGroupIds,
+		InstanceType:     req.InstanceType,
+		KeyName:          keyname,
+		UserData:         userdata,
+	}, nil
+}
+
+func (s *Session) doEC2RequestSpotInstances(cli *EC2Client, req PostRequest) {
+	ec2spec, err := s.newEC2InstanceSpec(req)
+	if err != nil {
+		s.Logf("newEC2InstanceSpec: %v", err)
+		return
 	}
 	ebsoptimized := true
 	spec := &types.RequestSpotLaunchSpecification{
 		BlockDeviceMappings: EC2BlockDeviceMappings(40, "gp3"),
 		EbsOptimized:        &ebsoptimized,
-		ImageId:             &req.ImageId,
-		InstanceType:        types.InstanceType(req.InstanceType),
-		KeyName:             keyname,
-		SecurityGroupIds:    req.SecurityGroupIds,
-		UserData:            userdata,
+		ImageId:             &ec2spec.ImageId,
+		InstanceType:        types.InstanceType(ec2spec.InstanceType),
+		KeyName:             ec2spec.KeyName,
+		SecurityGroupIds:    ec2spec.SecurityGroupIds,
+		UserData:            ec2spec.UserData,
 	}
 	var count int32 = 1
 	if req.Count > 0 {
