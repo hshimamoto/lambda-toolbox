@@ -11,7 +11,7 @@ import (
 
 type EC2Client struct {
 	InstanceIds []string
-	VpcId       string
+	VpcId       *string
 	client      *ec2.Client
 }
 
@@ -52,11 +52,11 @@ func (cli *EC2Client) DescribeInstances() ([]types.Instance, error) {
 	input := &ec2.DescribeInstancesInput{
 		InstanceIds: cli.InstanceIds,
 	}
-	if cli.VpcId != "" {
+	if cli.VpcId != nil {
 		fname := "vpc-id"
 		filter := types.Filter{
 			Name:   &fname,
-			Values: []string{cli.VpcId},
+			Values: []string{*cli.VpcId},
 		}
 		input.Filters = append(input.Filters, filter)
 	}

@@ -134,6 +134,7 @@ func (s *Session) doEC2RequestSpotInstances(cli *EC2Client, req PostRequest) {
 		"Name":           req.Name,
 	}
 	cli.InstanceIds = nil
+	cli.VpcId = nil
 	for _, sir := range sirs {
 		if err := cli.CreateTags(*sir.InstanceId, kvs); err != nil {
 			s.Logf("CreateTags: %v", err)
@@ -194,9 +195,10 @@ func (s *Session) doEC2Command(req PostRequest) {
 		}
 		s.Logf("%s", EC2ImageString(image))
 	case "describe":
-		cli.VpcId = req.VpcId
-		if cli.VpcId != "" {
-			s.Logf("VpcId: %s", cli.VpcId)
+		cli.VpcId = nil
+		if req.VpcId != "" {
+			s.Logf("VpcId: %s", req.VpcId)
+			cli.VpcId = &req.VpcId
 		}
 		instances, err := cli.DescribeInstances()
 		if err != nil {
