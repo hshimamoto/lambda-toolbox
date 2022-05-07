@@ -69,6 +69,78 @@ func (s *Session) getFile(filename string) ([]byte, error) {
 	return nil, fmt.Errorf("%s is not found: (%v) (%v)", filename, err0, err1)
 }
 
+func (s *Session) doEC2RequestSpotInstances(cli *EC2Client, req PostRequest) {
+	var keyname *string = nil
+	var userdata *string = nil
+	if req.KeyName != "" {
+		keyname = &req.KeyName
+	}
+	if req.UserDataFile != "" {
+		obj, err := s.getFile(req.UserDataFile)
+		if err != nil {
+			s.Logf("UserDataFile: %v", err)
+			return
+		}
+		data := base64.StdEncoding.EncodeToString(obj)
+		userdata = &data
+	}
+	ebsoptimized := true
+	spec := &types.RequestSpotLaunchSpecification{
+		BlockDeviceMappings: EC2BlockDeviceMappings(40, "gp3"),
+		EbsOptimized:        &ebsoptimized,
+		ImageId:             &req.ImageId,
+		InstanceType:        types.InstanceType(req.InstanceType),
+		KeyName:             keyname,
+		SecurityGroupIds:    req.SecurityGroupIds,
+		UserData:            userdata,
+	}
+	sirs, err := cli.RequestSpotInstances(1, spec)
+	if err != nil {
+		s.Logf("RequestSpotInstances: %v", err)
+		return
+	}
+	ids := []string{}
+	for _, sir := range sirs {
+		s.Logf("id=%s", *sir.SpotInstanceRequestId)
+		ids = append(ids, *sir.SpotInstanceRequestId)
+	}
+	first := true
+	for {
+		sirs, err = cli.DescribeSpotInstanceRequests(ids)
+		if err != nil {
+			s.Logf("DescribeSpotInstanceRequests: %v", err)
+			if !first {
+				return
+			}
+			first = false
+			time.Sleep(time.Second)
+			continue
+		}
+		fullfilled := true
+		for _, sir := range sirs {
+			if sir.InstanceId == nil {
+				s.Logf("%s is not fullfilled", *sir.SpotInstanceRequestId)
+				fullfilled = false
+			}
+		}
+		if fullfilled {
+			break
+		}
+		time.Sleep(time.Second)
+	}
+	// setup tag
+	kvs := map[string]string{
+		"lambda-toolbox": "yes",
+		"Name":           req.Name,
+	}
+	for _, sir := range sirs {
+		if err := cli.CreateTags(*sir.InstanceId, kvs); err != nil {
+			s.Logf("CreateTags: %v", err)
+			// ignore error
+		}
+	}
+}
+
 func (s *Session) doEC2Command(req PostRequest) {
 	cli, err := NewEC2Client()
 	if err != nil {
@@ -106,75 +178,7 @@ func (s *Session) doEC2Command(req PostRequest) {
 			s.Logf("%s", EC2InstanceString(inst))
 		}
 	case "spotrequest":
-		var keyname *string = nil
-		var userdata *string = nil
-		if req.KeyName != "" {
-			keyname = &req.KeyName
-		}
-		if req.UserDataFile != "" {
-			obj, err := s.getFile(req.UserDataFile)
-			if err != nil {
-				s.Logf("UserDataFile: %v", err)
-				return
-			}
-			data := base64.StdEncoding.EncodeToString(obj)
-			userdata = &data
-		}
-		ebsoptimized := true
-		spec := &types.RequestSpotLaunchSpecification{
-			BlockDeviceMappings: EC2BlockDeviceMappings(40, "gp3"),
-			EbsOptimized:        &ebsoptimized,
-			ImageId:             &req.ImageId,
-			InstanceType:        types.InstanceType(req.InstanceType),
-			KeyName:             keyname,
-			SecurityGroupIds:    req.SecurityGroupIds,
-			UserData:            userdata,
-		}
-		sirs, err := cli.RequestSpotInstances(1, spec)
-		if err != nil {
-			s.Logf("RequestSpotInstances: %v", err)
-			return
-		}
-		ids := []string{}
-		for _, sir := range sirs {
-			s.Logf("id=%s", *sir.SpotInstanceRequestId)
-			ids = append(ids, *sir.SpotInstanceRequestId)
-		}
-		first := true
-		for {
-			sirs, err = cli.DescribeSpotInstanceRequests(ids)
-			if err != nil {
-				s.Logf("DescribeSpotInstanceRequests: %v", err)
-				if !first {
-					return
-				}
-				first = false
-				time.Sleep(time.Second)
-				continue
-			}
-			fullfilled := true
-			for _, sir := range sirs {
-				if sir.InstanceId == nil {
-					s.Logf("%s is not fullfilled", *sir.SpotInstanceRequestId)
-					fullfilled = false
-				}
-			}
-			if fullfilled {
-				break
-			}
-			time.Sleep(time.Second)
-		}
-		// setup tag
-		kvs := map[string]string{
-			"lambda-toolbox": "yes",
-			"Name":           req.Name,
-		}
-		for _, sir := range sirs {
-			if err := cli.CreateTags(*sir.InstanceId, kvs); err != nil {
-				s.Logf("CreateTags: %v", err)
-				// ignore error
-			}
-		}
+		s.doEC2RequestSpotInstances(cli, req)
 	}
 }
 
