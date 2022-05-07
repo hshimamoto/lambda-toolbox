@@ -167,7 +167,7 @@ func (cli *EC2Client) RunInstances(count int32, ec2spec *EC2InstanceSpec) ([]typ
 	input := &ec2.RunInstancesInput{
 		MaxCount:            &count,
 		MinCount:            &count,
-		BlockDeviceMappings: EC2BlockDeviceMappings(40, "gp3"),
+		BlockDeviceMappings: EC2BlockDeviceMappings(ec2spec.VolumeSize, "gp3"),
 		EbsOptimized:        &ebsoptimized,
 		ImageId:             &ec2spec.ImageId,
 		InstanceType:        types.InstanceType(ec2spec.InstanceType),

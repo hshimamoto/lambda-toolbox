@@ -46,6 +46,7 @@ type PostRequest struct {
 	SecurityGroupIds []string `json securitygroupids,omitempty`
 	UserDataFile     string   `json userdatafile,omitempty`
 	Name             string   `json name,omitempty`
+	VolumeSize       int32    `json volumesize,omitempty`
 	ExecCommand      []string `json execcommand,omitempty`
 	Arch             string   `json arch,omitempty`
 	Distro           string   `json distro,omitempty`
@@ -83,6 +84,7 @@ type EC2InstanceSpec struct {
 	InstanceType     string
 	KeyName          *string
 	UserData         *string
+	VolumeSize       int32
 	Tags             map[string]string
 }
 
@@ -104,6 +106,10 @@ func (s *Session) newEC2InstanceSpec(req PostRequest) (*EC2InstanceSpec, error) 
 		"lambda-toolbox": "yes",
 		"Name":           req.Name,
 	}
+	var volumesize int32 = 8
+	if req.VolumeSize > 0 {
+		volumesize = req.VolumeSize
+	}
 	return &EC2InstanceSpec{
 		ImageId:          req.ImageId,
 		SecurityGroupIds: req.SecurityGroupIds,
@@ -111,6 +117,7 @@ func (s *Session) newEC2InstanceSpec(req PostRequest) (*EC2InstanceSpec, error) 
 		KeyName:          keyname,
 		UserData:         userdata,
 		Tags:             tags,
+		VolumeSize:       volumesize,
 	}, nil
 }
 
@@ -139,7 +146,7 @@ func (s *Session) doEC2RequestSpotInstances(cli *EC2Client, req PostRequest) {
 	}
 	ebsoptimized := true
 	spec := &types.RequestSpotLaunchSpecification{
-		BlockDeviceMappings: EC2BlockDeviceMappings(40, "gp3"),
+		BlockDeviceMappings: EC2BlockDeviceMappings(ec2spec.VolumeSize, "gp3"),
 		EbsOptimized:        &ebsoptimized,
 		ImageId:             &ec2spec.ImageId,
 		InstanceType:        types.InstanceType(ec2spec.InstanceType),
