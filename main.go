@@ -126,29 +126,7 @@ func (s *Session) doEC2RunInstances(cli *EC2Client, req PostRequest) {
 		return
 	}
 	for _, i := range instances {
-		// Instance itself
-		if err := cli.CreateTags(*i.InstanceId, ec2spec.Tags); err != nil {
-			s.Logf("CreateTags: %v", err)
-		}
-		// Block Devices
-		for _, b := range i.BlockDeviceMappings {
-			ebs := b.Ebs
-			if ebs == nil || ebs.VolumeId == nil {
-				continue
-			}
-			if err := cli.CreateTags(*ebs.VolumeId, ec2spec.Tags); err != nil {
-				s.Logf("CreateTags: %v", err)
-			}
-		}
-		// Network Interfaces
-		for _, n := range i.NetworkInterfaces {
-			if n.NetworkInterfaceId == nil {
-				continue
-			}
-			if err := cli.CreateTags(*n.NetworkInterfaceId, ec2spec.Tags); err != nil {
-				s.Logf("CreateTags: %v", err)
-			}
-		}
+		cli.SetTags(i, ec2spec.Tags)
 		s.Logf("%s", EC2InstanceString(i))
 	}
 }
@@ -208,14 +186,9 @@ func (s *Session) doEC2RequestSpotInstances(cli *EC2Client, req PostRequest) {
 		time.Sleep(time.Second)
 	}
 	// setup tag
-	kvs := ec2spec.Tags
 	cli.InstanceIds = nil
 	cli.VpcId = nil
 	for _, sir := range sirs {
-		if err := cli.CreateTags(*sir.InstanceId, kvs); err != nil {
-			s.Logf("CreateTags: %v", err)
-			// ignore error
-		}
 		cli.InstanceIds = append(cli.InstanceIds, *sir.InstanceId)
 	}
 	instances, err := cli.DescribeInstances()
@@ -225,25 +198,7 @@ func (s *Session) doEC2RequestSpotInstances(cli *EC2Client, req PostRequest) {
 		return
 	}
 	for _, i := range instances {
-		// Block Devices
-		for _, b := range i.BlockDeviceMappings {
-			ebs := b.Ebs
-			if ebs == nil || ebs.VolumeId == nil {
-				continue
-			}
-			if err := cli.CreateTags(*ebs.VolumeId, kvs); err != nil {
-				s.Logf("CreateTags: %v", err)
-			}
-		}
-		// Network Interfaces
-		for _, n := range i.NetworkInterfaces {
-			if n.NetworkInterfaceId == nil {
-				continue
-			}
-			if err := cli.CreateTags(*n.NetworkInterfaceId, kvs); err != nil {
-				s.Logf("CreateTags: %v", err)
-			}
-		}
+		cli.SetTags(i, ec2spec.Tags)
 	}
 }
 

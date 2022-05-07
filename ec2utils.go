@@ -89,3 +89,31 @@ func (cli *EC2Client) GetImage(distro, arch string) (types.Image, error) {
 	})
 	return images[0], nil
 }
+
+func (cli *EC2Client) SetTags(i types.Instance, tags map[string]string) []error {
+	var errs []error = nil
+	// Instance itself
+	if err := cli.CreateTags(*i.InstanceId, tags); err != nil {
+		errs = append(errs, err)
+	}
+	// Block Devices
+	for _, b := range i.BlockDeviceMappings {
+		ebs := b.Ebs
+		if ebs == nil || ebs.VolumeId == nil {
+			continue
+		}
+		if err := cli.CreateTags(*ebs.VolumeId, tags); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	// Network Interfaces
+	for _, n := range i.NetworkInterfaces {
+		if n.NetworkInterfaceId == nil {
+			continue
+		}
+		if err := cli.CreateTags(*n.NetworkInterfaceId, tags); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	return errs
+}
