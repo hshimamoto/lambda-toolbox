@@ -133,10 +133,39 @@ func (s *Session) doEC2RequestSpotInstances(cli *EC2Client, req PostRequest) {
 		"lambda-toolbox": "yes",
 		"Name":           req.Name,
 	}
+	cli.InstanceIds = nil
 	for _, sir := range sirs {
 		if err := cli.CreateTags(*sir.InstanceId, kvs); err != nil {
 			s.Logf("CreateTags: %v", err)
 			// ignore error
+		}
+		cli.InstanceIds = append(cli.InstanceIds, *sir.InstanceId)
+	}
+	instances, err := cli.DescribeInstances()
+	if err != nil {
+		s.Logf("DescribeInstances: %v", err)
+		// why?
+		return
+	}
+	for _, i := range instances {
+		// Block Devices
+		for _, b := range i.BlockDeviceMappings {
+			ebs := b.Ebs
+			if ebs == nil || ebs.VolumeId == nil {
+				continue
+			}
+			if err := cli.CreateTags(*ebs.VolumeId, kvs); err != nil {
+				s.Logf("CreateTags: %v", err)
+			}
+		}
+		// Network Interfaces
+		for _, n := range i.NetworkInterfaces {
+			if n.NetworkInterfaceId == nil {
+				continue
+			}
+			if err := cli.CreateTags(*n.NetworkInterfaceId, kvs); err != nil {
+				s.Logf("CreateTags: %v", err)
+			}
 		}
 	}
 }

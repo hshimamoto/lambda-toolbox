@@ -10,8 +10,9 @@ import (
 )
 
 type EC2Client struct {
-	VpcId  string
-	client *ec2.Client
+	InstanceIds []string
+	VpcId       string
+	client      *ec2.Client
 }
 
 func NewEC2Client() (*EC2Client, error) {
@@ -48,7 +49,9 @@ func (cli *EC2Client) CreateTags(id string, kvs map[string]string) error {
 
 func (cli *EC2Client) DescribeInstances() ([]types.Instance, error) {
 	// create filter
-	input := &ec2.DescribeInstancesInput{}
+	input := &ec2.DescribeInstancesInput{
+		InstanceIds: cli.InstanceIds,
+	}
 	if cli.VpcId != "" {
 		fname := "vpc-id"
 		filter := types.Filter{
