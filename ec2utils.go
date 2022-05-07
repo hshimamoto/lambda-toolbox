@@ -42,6 +42,11 @@ func EC2ImageString(i types.Image) string {
 		*i.ImageId, *i.Name, *i.Description)
 }
 
+func EC2StateChangeString(i types.InstanceStateChange) string {
+	return fmt.Sprintf("%s:%s to %s",
+		*i.InstanceId, i.PreviousState.Name, i.CurrentState.Name)
+}
+
 func EC2BlockDeviceMappings(volsz int32, voltype string) []types.BlockDeviceMapping {
 	devname := "/dev/sda1"
 	return []types.BlockDeviceMapping{

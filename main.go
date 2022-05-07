@@ -38,6 +38,7 @@ type PostRequest struct {
 	Zipfile          string   `json zipfile,omitempty`
 	Destination      string   `json destination,omitempty`
 	Sources          []string `json sources,omitempty`
+	InstanceIds      []string `json instanceids,omitempty`
 	VpcId            string   `json vpcid,omitempty`
 	ImageId          string   `json imageid,omitempty`
 	InstanceType     string   `json instancetype,omitempty`
@@ -210,6 +211,33 @@ func (s *Session) doEC2Command(req PostRequest) {
 		}
 	case "spotrequest":
 		s.doEC2RequestSpotInstances(cli, req)
+	case "start":
+		instances, err := cli.StartInstances(req.InstanceIds)
+		if err != nil {
+			s.Logf("StartInstances: %v", err)
+			return
+		}
+		for _, i := range instances {
+			s.Logf("%s", EC2StateChangeString(i))
+		}
+	case "stop":
+		instances, err := cli.StopInstances(req.InstanceIds)
+		if err != nil {
+			s.Logf("StopInstances: %v", err)
+			return
+		}
+		for _, i := range instances {
+			s.Logf("%s", EC2StateChangeString(i))
+		}
+	case "terminate":
+		instances, err := cli.TerminateInstances(req.InstanceIds)
+		if err != nil {
+			s.Logf("TerminateInstances: %v", err)
+			return
+		}
+		for _, i := range instances {
+			s.Logf("%s", EC2StateChangeString(i))
+		}
 	}
 }
 

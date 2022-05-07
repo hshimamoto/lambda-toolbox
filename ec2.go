@@ -128,3 +128,36 @@ func (cli *EC2Client) DescribeImages(owner, arch, name string) ([]types.Image, e
 	}
 	return output.Images, nil
 }
+
+func (cli *EC2Client) StartInstances(ids []string) ([]types.InstanceStateChange, error) {
+	input := &ec2.StartInstancesInput{
+		InstanceIds: ids,
+	}
+	output, err := cli.client.StartInstances(context.TODO(), input)
+	if err != nil {
+		return nil, err
+	}
+	return output.StartingInstances, nil
+}
+
+func (cli *EC2Client) StopInstances(ids []string) ([]types.InstanceStateChange, error) {
+	input := &ec2.StopInstancesInput{
+		InstanceIds: ids,
+	}
+	output, err := cli.client.StopInstances(context.TODO(), input)
+	if err != nil {
+		return nil, err
+	}
+	return output.StoppingInstances, nil
+}
+
+func (cli *EC2Client) TerminateInstances(ids []string) ([]types.InstanceStateChange, error) {
+	input := &ec2.TerminateInstancesInput{
+		InstanceIds: ids,
+	}
+	output, err := cli.client.TerminateInstances(context.TODO(), input)
+	if err != nil {
+		return nil, err
+	}
+	return output.TerminatingInstances, nil
+}
