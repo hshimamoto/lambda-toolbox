@@ -67,8 +67,11 @@ func (cli *EC2Client) GetImage(distro, arch string) (types.Image, error) {
 	case "amazon":
 		name = "amzn2-ami-kernel-*-hvm-*-gp2"
 		owner = "amazon"
-	case "ubuntu":
+	case "ubuntu20", "ubuntu":
 		name = "ubuntu/*-20.04-*"
+		owner = "099720109477"
+	case "ubuntu22":
+		name = "ubuntu/*-22.04-*"
 		owner = "099720109477"
 	}
 	if name == "" || owner == "" {
