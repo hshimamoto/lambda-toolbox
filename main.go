@@ -46,7 +46,7 @@ type PostRequest struct {
 	SecurityGroupIds []string `json securitygroupids,omitempty`
 	UserDataFile     string   `json userdatafile,omitempty`
 	Name             string   `json name,omitempty`
-	ExecCommand      string   `json execcommand,omitempty`
+	ExecCommand      []string `json execcommand,omitempty`
 	Arch             string   `json arch,omitempty`
 	Distro           string   `json distro,omitempty`
 }
@@ -310,7 +310,7 @@ func (s *Session) doExecCommand(req PostRequest) {
 			s.Logf("%s", line)
 		}
 	case "run":
-		if req.ExecCommand == "" {
+		if req.ExecCommand == nil {
 			s.Logf("no execcommand")
 			return
 		}

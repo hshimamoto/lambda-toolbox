@@ -15,8 +15,8 @@ func ExecListFiles(dir string) ([]string, error) {
 	return strings.Split(string(output), "\n"), nil
 }
 
-func ExecRun(exe string) ([]string, error) {
-	cmd := exec.Command(exe)
+func ExecRun(cmdargs []string) ([]string, error) {
+	cmd := exec.Command(cmdargs[0], cmdargs[1:]...)
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, err
