@@ -274,6 +274,20 @@ func (s *Session) handleJSONRequest(body []byte) {
 	}
 }
 
+func (s *Session) handleMultipartRequestSubpartS3(key string, obj []byte) {
+	if err := s.Bucket.Put(key, obj); err != nil {
+		s.Logf("S3Put: %v", err)
+		return
+	}
+}
+
+func (s *Session) handleMultipartRequestSubpartTMP(filename string, obj []byte) {
+	if err := os.WriteFile("/tmp/"+filename, obj, 0644); err != nil {
+		s.Logf("WriteFile: %v", err)
+		return
+	}
+}
+
 func (s *Session) handleMultipartRequestSubpart(body []byte) {
 	// header and content
 	a := bytes.SplitN(body, []byte("\r\n\r\n"), 2)
@@ -329,18 +343,18 @@ func (s *Session) handleMultipartRequestSubpart(body []byte) {
 		}
 	}
 	s.Logf("name = %s, filename = %s", name, filename)
-	if name != "file" {
-		s.Logf("unknown name = %s", name)
-		return
-	}
 	// put it in tmp
 	if filename == "" {
 		s.Logf("no filename")
 		return
 	}
-	if err := s.Bucket.Put("tmp/"+filename, a[1]); err != nil {
-		s.Logf("S3Put: %v", err)
-		return
+	switch name {
+	case "file", "s3":
+		s.handleMultipartRequestSubpartS3("tmp/"+filename, a[1])
+	case "tmp":
+		s.handleMultipartRequestSubpartTMP(filename, a[1])
+	default:
+		s.Logf("unknown name = %s", name)
 	}
 }
 
