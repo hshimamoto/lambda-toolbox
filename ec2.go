@@ -161,3 +161,23 @@ func (cli *EC2Client) TerminateInstances(ids []string) ([]types.InstanceStateCha
 	}
 	return output.TerminatingInstances, nil
 }
+
+func (cli *EC2Client) RunInstances(count int32, ec2spec *EC2InstanceSpec) ([]types.Instance, error) {
+	ebsoptimized := true
+	input := &ec2.RunInstancesInput{
+		MaxCount:            &count,
+		MinCount:            &count,
+		BlockDeviceMappings: EC2BlockDeviceMappings(40, "gp3"),
+		EbsOptimized:        &ebsoptimized,
+		ImageId:             &ec2spec.ImageId,
+		InstanceType:        types.InstanceType(ec2spec.InstanceType),
+		KeyName:             ec2spec.KeyName,
+		SecurityGroupIds:    ec2spec.SecurityGroupIds,
+		UserData:            ec2spec.UserData,
+	}
+	output, err := cli.client.RunInstances(context.TODO(), input)
+	if err != nil {
+		return nil, err
+	}
+	return output.Instances, nil
+}

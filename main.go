@@ -83,6 +83,7 @@ type EC2InstanceSpec struct {
 	InstanceType     string
 	KeyName          *string
 	UserData         *string
+	Tags             map[string]string
 }
 
 func (s *Session) newEC2InstanceSpec(req PostRequest) (*EC2InstanceSpec, error) {
@@ -99,13 +100,57 @@ func (s *Session) newEC2InstanceSpec(req PostRequest) (*EC2InstanceSpec, error) 
 		data := base64.StdEncoding.EncodeToString(obj)
 		userdata = &data
 	}
+	tags := map[string]string{
+		"lambda-toolbox": "yes",
+		"Name":           req.Name,
+	}
 	return &EC2InstanceSpec{
 		ImageId:          req.ImageId,
 		SecurityGroupIds: req.SecurityGroupIds,
 		InstanceType:     req.InstanceType,
 		KeyName:          keyname,
 		UserData:         userdata,
+		Tags:             tags,
 	}, nil
+}
+
+func (s *Session) doEC2RunInstances(cli *EC2Client, req PostRequest) {
+	ec2spec, err := s.newEC2InstanceSpec(req)
+	if err != nil {
+		s.Logf("newEC2InstanceSpec: %v", err)
+		return
+	}
+	instances, err := cli.RunInstances(1, ec2spec)
+	if err != nil {
+		s.Logf("RunInstances: %v", err)
+		return
+	}
+	for _, i := range instances {
+		// Instance itself
+		if err := cli.CreateTags(*i.InstanceId, ec2spec.Tags); err != nil {
+			s.Logf("CreateTags: %v", err)
+		}
+		// Block Devices
+		for _, b := range i.BlockDeviceMappings {
+			ebs := b.Ebs
+			if ebs == nil || ebs.VolumeId == nil {
+				continue
+			}
+			if err := cli.CreateTags(*ebs.VolumeId, ec2spec.Tags); err != nil {
+				s.Logf("CreateTags: %v", err)
+			}
+		}
+		// Network Interfaces
+		for _, n := range i.NetworkInterfaces {
+			if n.NetworkInterfaceId == nil {
+				continue
+			}
+			if err := cli.CreateTags(*n.NetworkInterfaceId, ec2spec.Tags); err != nil {
+				s.Logf("CreateTags: %v", err)
+			}
+		}
+		s.Logf("%s", EC2InstanceString(i))
+	}
 }
 
 func (s *Session) doEC2RequestSpotInstances(cli *EC2Client, req PostRequest) {
@@ -163,10 +208,7 @@ func (s *Session) doEC2RequestSpotInstances(cli *EC2Client, req PostRequest) {
 		time.Sleep(time.Second)
 	}
 	// setup tag
-	kvs := map[string]string{
-		"lambda-toolbox": "yes",
-		"Name":           req.Name,
-	}
+	kvs := ec2spec.Tags
 	cli.InstanceIds = nil
 	cli.VpcId = nil
 	for _, sir := range sirs {
@@ -244,6 +286,8 @@ func (s *Session) doEC2Command(req PostRequest) {
 		}
 	case "spotrequest":
 		s.doEC2RequestSpotInstances(cli, req)
+	case "run":
+		s.doEC2RunInstances(cli, req)
 	case "start":
 		instances, err := cli.StartInstances(req.InstanceIds)
 		if err != nil {
