@@ -56,6 +56,19 @@ func (s *Session) Logf(f string, args ...interface{}) {
 	s.Outputs = append(s.Outputs, out)
 }
 
+func (s *Session) getFile(filename string) ([]byte, error) {
+	// try /tmp first
+	body, err0 := os.ReadFile("/tmp/" + filename)
+	if err0 == nil {
+		return body, nil
+	}
+	body, err1 := s.Bucket.Get(filename)
+	if err1 == nil {
+		return body, nil
+	}
+	return nil, fmt.Errorf("%s is not found: (%v) (%v)", filename, err0, err1)
+}
+
 func (s *Session) doEC2Command(req PostRequest) {
 	cli, err := NewEC2Client()
 	if err != nil {
@@ -99,7 +112,7 @@ func (s *Session) doEC2Command(req PostRequest) {
 			keyname = &req.KeyName
 		}
 		if req.UserDataFile != "" {
-			obj, err := s.Bucket.Get(req.UserDataFile)
+			obj, err := s.getFile(req.UserDataFile)
 			if err != nil {
 				s.Logf("UserDataFile: %v", err)
 				return
