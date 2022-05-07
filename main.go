@@ -49,6 +49,7 @@ type PostRequest struct {
 	ExecCommand      []string `json execcommand,omitempty`
 	Arch             string   `json arch,omitempty`
 	Distro           string   `json distro,omitempty`
+	Count            int32    `json count,omitempty`
 }
 
 func (s *Session) Logf(f string, args ...interface{}) {
@@ -101,7 +102,11 @@ func (s *Session) doEC2RequestSpotInstances(cli *EC2Client, req PostRequest) {
 		SecurityGroupIds:    req.SecurityGroupIds,
 		UserData:            userdata,
 	}
-	sirs, err := cli.RequestSpotInstances(1, spec)
+	var count int32 = 1
+	if req.Count > 0 {
+		count = req.Count
+	}
+	sirs, err := cli.RequestSpotInstances(count, spec)
 	if err != nil {
 		s.Logf("RequestSpotInstances: %v", err)
 		return
