@@ -57,6 +57,12 @@ func (s *Session) Logf(f string, args ...interface{}) {
 	s.Outputs = append(s.Outputs, out)
 }
 
+func (s *Session) LogLines(lines []string) {
+	for _, line := range lines {
+		s.Logf("%s", line)
+	}
+}
+
 func (s *Session) getFile(filename string) ([]byte, error) {
 	// try /tmp first
 	body, err0 := os.ReadFile("/tmp/" + filename)
@@ -306,9 +312,7 @@ func (s *Session) doExecCommand(req PostRequest) {
 			s.Logf("ListFiles: %v", err)
 			return
 		}
-		for _, line := range lines {
-			s.Logf("%s", line)
-		}
+		s.LogLines(lines)
 	case "run":
 		if req.ExecCommand == nil {
 			s.Logf("no execcommand")
@@ -319,9 +323,7 @@ func (s *Session) doExecCommand(req PostRequest) {
 			s.Logf("Run: %v", err)
 			return
 		}
-		for _, line := range lines {
-			s.Logf("%s", line)
-		}
+		s.LogLines(lines)
 	}
 }
 
