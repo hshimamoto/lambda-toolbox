@@ -52,7 +52,7 @@ type PostRequest struct {
 
 func (s *Session) Logf(f string, args ...interface{}) {
 	out := fmt.Sprintf(f, args...)
-	fmt.Sprintf("%s\n", out)
+	fmt.Printf("%s\n", out)
 	s.Outputs = append(s.Outputs, out)
 }
 
