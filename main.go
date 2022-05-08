@@ -32,25 +32,27 @@ func NewSession() *Session {
 }
 
 type PostRequest struct {
-	Command          string   `json:command`
-	Function         string   `json function,omitempty`
-	Zipfile          string   `json zipfile,omitempty`
-	Destination      string   `json destination,omitempty`
-	Sources          []string `json sources,omitempty`
-	InstanceId       *string  `json instanceid,omitempty`
-	InstanceIds      []string `json instanceids,omitempty`
-	VpcId            string   `json vpcid,omitempty`
-	ImageId          *string  `json imageid,omitempty`
-	InstanceType     string   `json instancetype,omitempty`
-	KeyName          *string  `json keyname,omitempty`
-	SecurityGroupIds []string `json securitygroupids,omitempty`
-	UserDataFile     *string  `json userdatafile,omitempty`
-	Name             *string  `json name,omitempty`
-	VolumeSize       *int32   `json volumesize,omitempty`
-	ExecCommand      []string `json execcommand,omitempty`
-	Arch             *string  `json arch,omitempty`
-	Distro           *string  `json distro,omitempty`
-	Count            *int32   `json count,omitempty`
+	Command           string   `json:command`
+	Function          string   `json function,omitempty`
+	Zipfile           string   `json zipfile,omitempty`
+	Destination       string   `json destination,omitempty`
+	Sources           []string `json sources,omitempty`
+	InstanceId        *string  `json instanceid,omitempty`
+	InstanceIds       []string `json instanceids,omitempty`
+	VpcId             string   `json vpcid,omitempty`
+	SubnetId          *string  `json subnetid,omitempty`
+	AssociatePublicIp *bool    `json associatepublicip,omitempty`
+	ImageId           *string  `json imageid,omitempty`
+	InstanceType      string   `json instancetype,omitempty`
+	KeyName           *string  `json keyname,omitempty`
+	SecurityGroupIds  []string `json securitygroupids,omitempty`
+	UserDataFile      *string  `json userdatafile,omitempty`
+	Name              *string  `json name,omitempty`
+	VolumeSize        *int32   `json volumesize,omitempty`
+	ExecCommand       []string `json execcommand,omitempty`
+	Arch              *string  `json arch,omitempty`
+	Distro            *string  `json distro,omitempty`
+	Count             *int32   `json count,omitempty`
 }
 
 func (s *Session) Logf(f string, args ...interface{}) {
@@ -79,13 +81,15 @@ func (s *Session) getFile(filename string) ([]byte, error) {
 }
 
 type EC2InstanceSpec struct {
-	ImageId          string
-	SecurityGroupIds []string
-	InstanceType     string
-	KeyName          *string
-	UserData         *string
-	VolumeSize       int32
-	Tags             map[string]string
+	ImageId           string
+	SecurityGroupIds  []string
+	InstanceType      string
+	KeyName           *string
+	UserData          *string
+	SubnetId          *string
+	AssociatePublicIp *bool
+	VolumeSize        int32
+	Tags              map[string]string
 }
 
 func (s *Session) newEC2InstanceSpec(req PostRequest) (*EC2InstanceSpec, error) {
@@ -113,13 +117,15 @@ func (s *Session) newEC2InstanceSpec(req PostRequest) (*EC2InstanceSpec, error) 
 		volumesize = *req.VolumeSize
 	}
 	return &EC2InstanceSpec{
-		ImageId:          *req.ImageId,
-		SecurityGroupIds: req.SecurityGroupIds,
-		InstanceType:     req.InstanceType,
-		KeyName:          req.KeyName,
-		UserData:         userdata,
-		Tags:             tags,
-		VolumeSize:       volumesize,
+		ImageId:           *req.ImageId,
+		SecurityGroupIds:  req.SecurityGroupIds,
+		InstanceType:      req.InstanceType,
+		KeyName:           req.KeyName,
+		UserData:          userdata,
+		SubnetId:          req.SubnetId,
+		AssociatePublicIp: req.AssociatePublicIp,
+		Tags:              tags,
+		VolumeSize:        volumesize,
 	}, nil
 }
 
