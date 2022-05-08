@@ -71,7 +71,17 @@ func (cli *EC2Client) DescribeInstances() ([]types.Instance, error) {
 	return instances, nil
 }
 
-func (cli *EC2Client) RequestSpotInstances(count int32, spec *types.RequestSpotLaunchSpecification) ([]types.SpotInstanceRequest, error) {
+func (cli *EC2Client) RequestSpotInstances(count int32, ec2spec *EC2InstanceSpec) ([]types.SpotInstanceRequest, error) {
+	ebsoptimized := true
+	spec := &types.RequestSpotLaunchSpecification{
+		BlockDeviceMappings: EC2BlockDeviceMappings(ec2spec.VolumeSize, "gp3"),
+		EbsOptimized:        &ebsoptimized,
+		ImageId:             &ec2spec.ImageId,
+		InstanceType:        types.InstanceType(ec2spec.InstanceType),
+		KeyName:             ec2spec.KeyName,
+		SecurityGroupIds:    ec2spec.SecurityGroupIds,
+		UserData:            ec2spec.UserData,
+	}
 	tag := func(key, val string) types.Tag {
 		tagKey := key
 		tagValue := val

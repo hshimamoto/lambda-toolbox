@@ -12,7 +12,6 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 )
 
 type Session struct {
@@ -144,21 +143,11 @@ func (s *Session) doEC2RequestSpotInstances(cli *EC2Client, req PostRequest) {
 		s.Logf("newEC2InstanceSpec: %v", err)
 		return
 	}
-	ebsoptimized := true
-	spec := &types.RequestSpotLaunchSpecification{
-		BlockDeviceMappings: EC2BlockDeviceMappings(ec2spec.VolumeSize, "gp3"),
-		EbsOptimized:        &ebsoptimized,
-		ImageId:             &ec2spec.ImageId,
-		InstanceType:        types.InstanceType(ec2spec.InstanceType),
-		KeyName:             ec2spec.KeyName,
-		SecurityGroupIds:    ec2spec.SecurityGroupIds,
-		UserData:            ec2spec.UserData,
-	}
 	var count int32 = 1
 	if req.Count > 0 {
 		count = req.Count
 	}
-	sirs, err := cli.RequestSpotInstances(count, spec)
+	sirs, err := cli.RequestSpotInstances(count, ec2spec)
 	if err != nil {
 		s.Logf("RequestSpotInstances: %v", err)
 		return
