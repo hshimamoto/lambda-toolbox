@@ -72,18 +72,7 @@ func (cli *EC2Client) DescribeInstances() ([]types.Instance, error) {
 }
 
 func (cli *EC2Client) RequestSpotInstances(count int32, ec2spec *EC2InstanceSpec) ([]types.SpotInstanceRequest, error) {
-	securitygroupids := ec2spec.SecurityGroupIds
-	var netspecs []types.InstanceNetworkInterfaceSpecification = nil
-	if ec2spec.SubnetId != nil {
-		var index int32 = 0
-		netspecs = append(netspecs, types.InstanceNetworkInterfaceSpecification{
-			AssociatePublicIpAddress: ec2spec.AssociatePublicIp,
-			DeviceIndex:              &index,
-			SubnetId:                 ec2spec.SubnetId,
-			Groups:                   ec2spec.SecurityGroupIds,
-		})
-		securitygroupids = nil
-	}
+	netspecs, securitygroupids := getNetworkInterfaceSpecification(ec2spec)
 	ebsoptimized := true
 	spec := &types.RequestSpotLaunchSpecification{
 		BlockDeviceMappings: EC2BlockDeviceMappings(ec2spec.VolumeSize, "gp3"),
@@ -186,18 +175,7 @@ func (cli *EC2Client) TerminateInstances(ids []string) ([]types.InstanceStateCha
 }
 
 func (cli *EC2Client) RunInstances(count int32, ec2spec *EC2InstanceSpec) ([]types.Instance, error) {
-	securitygroupids := ec2spec.SecurityGroupIds
-	var netspecs []types.InstanceNetworkInterfaceSpecification = nil
-	if ec2spec.SubnetId != nil {
-		var index int32 = 0
-		netspecs = append(netspecs, types.InstanceNetworkInterfaceSpecification{
-			AssociatePublicIpAddress: ec2spec.AssociatePublicIp,
-			DeviceIndex:              &index,
-			SubnetId:                 ec2spec.SubnetId,
-			Groups:                   ec2spec.SecurityGroupIds,
-		})
-		securitygroupids = nil
-	}
+	netspecs, securitygroupids := getNetworkInterfaceSpecification(ec2spec)
 	ebsoptimized := true
 	input := &ec2.RunInstancesInput{
 		MaxCount:            &count,
@@ -216,4 +194,19 @@ func (cli *EC2Client) RunInstances(count int32, ec2spec *EC2InstanceSpec) ([]typ
 		return nil, err
 	}
 	return output.Instances, nil
+}
+
+func getNetworkInterfaceSpecification(ec2spec *EC2InstanceSpec) ([]types.InstanceNetworkInterfaceSpecification, []string) {
+	if ec2spec.SubnetId == nil {
+		return nil, ec2spec.SecurityGroupIds
+	}
+	var index int32 = 0
+	return []types.InstanceNetworkInterfaceSpecification{
+		types.InstanceNetworkInterfaceSpecification{
+			AssociatePublicIpAddress: ec2spec.AssociatePublicIp,
+			DeviceIndex:              &index,
+			SubnetId:                 ec2spec.SubnetId,
+			Groups:                   ec2spec.SecurityGroupIds,
+		},
+	}, nil
 }
