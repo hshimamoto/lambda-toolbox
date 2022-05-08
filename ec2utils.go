@@ -9,6 +9,15 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 )
 
+func EC2InstanceName(i types.Instance) string {
+	for _, t := range i.Tags {
+		if *t.Key == "Name" {
+			return *t.Value
+		}
+	}
+	return ""
+}
+
 func EC2InstanceString(i types.Instance) string {
 	name := ""
 	pubip := ""

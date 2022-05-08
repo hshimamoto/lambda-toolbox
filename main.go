@@ -37,6 +37,7 @@ type PostRequest struct {
 	Zipfile          string   `json zipfile,omitempty`
 	Destination      string   `json destination,omitempty`
 	Sources          []string `json sources,omitempty`
+	InstanceId       string   `json instanceid,omitempty`
 	InstanceIds      []string `json instanceids,omitempty`
 	VpcId            string   `json vpcid,omitempty`
 	ImageId          string   `json imageid,omitempty`
@@ -266,6 +267,28 @@ func (s *Session) doEC2Command(req PostRequest) {
 		for _, i := range instances {
 			s.Logf("%s", EC2StateChangeString(i))
 		}
+	case "rename":
+		if req.Name == "" {
+			s.Logf("no name")
+			return
+		}
+		cli.InstanceIds = []string{req.InstanceId}
+		cli.VpcId = nil
+		instances, err := cli.DescribeInstances()
+		if err != nil {
+			s.Logf("DescribeInstances: %v", err)
+			return
+		}
+		if len(instances) != 1 {
+			s.Logf("multiple instances")
+			return
+		}
+		prevname := EC2InstanceName(instances[0])
+		rename := map[string]string{
+			"Name": req.Name,
+		}
+		cli.SetTags(instances[0], rename)
+		s.Logf("%s: rename %s to %s", *instances[0].InstanceId, prevname, req.Name)
 	}
 }
 
