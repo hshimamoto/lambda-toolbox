@@ -37,20 +37,20 @@ type PostRequest struct {
 	Zipfile          string   `json zipfile,omitempty`
 	Destination      string   `json destination,omitempty`
 	Sources          []string `json sources,omitempty`
-	InstanceId       string   `json instanceid,omitempty`
+	InstanceId       *string  `json instanceid,omitempty`
 	InstanceIds      []string `json instanceids,omitempty`
 	VpcId            string   `json vpcid,omitempty`
-	ImageId          string   `json imageid,omitempty`
+	ImageId          *string  `json imageid,omitempty`
 	InstanceType     string   `json instancetype,omitempty`
-	KeyName          string   `json keyname,omitempty`
+	KeyName          *string  `json keyname,omitempty`
 	SecurityGroupIds []string `json securitygroupids,omitempty`
-	UserDataFile     string   `json userdatafile,omitempty`
-	Name             string   `json name,omitempty`
-	VolumeSize       int32    `json volumesize,omitempty`
+	UserDataFile     *string  `json userdatafile,omitempty`
+	Name             *string  `json name,omitempty`
+	VolumeSize       *int32   `json volumesize,omitempty`
 	ExecCommand      []string `json execcommand,omitempty`
-	Arch             string   `json arch,omitempty`
-	Distro           string   `json distro,omitempty`
-	Count            int32    `json count,omitempty`
+	Arch             *string  `json arch,omitempty`
+	Distro           *string  `json distro,omitempty`
+	Count            *int32   `json count,omitempty`
 }
 
 func (s *Session) Logf(f string, args ...interface{}) {
@@ -89,13 +89,15 @@ type EC2InstanceSpec struct {
 }
 
 func (s *Session) newEC2InstanceSpec(req PostRequest) (*EC2InstanceSpec, error) {
-	var keyname *string = nil
-	var userdata *string = nil
-	if req.KeyName != "" {
-		keyname = &req.KeyName
+	if req.ImageId == nil {
+		return nil, fmt.Errorf("no imageid")
 	}
-	if req.UserDataFile != "" {
-		obj, err := s.getFile(req.UserDataFile)
+	if req.Name == nil {
+		return nil, fmt.Errorf("no name")
+	}
+	var userdata *string = nil
+	if req.UserDataFile != nil {
+		obj, err := s.getFile(*req.UserDataFile)
 		if err != nil {
 			return nil, fmt.Errorf("UserDataFile: %v", err)
 		}
@@ -104,17 +106,17 @@ func (s *Session) newEC2InstanceSpec(req PostRequest) (*EC2InstanceSpec, error) 
 	}
 	tags := map[string]string{
 		"lambda-toolbox": "yes",
-		"Name":           req.Name,
+		"Name":           *req.Name,
 	}
 	var volumesize int32 = 8
-	if req.VolumeSize > 0 {
-		volumesize = req.VolumeSize
+	if req.VolumeSize != nil {
+		volumesize = *req.VolumeSize
 	}
 	return &EC2InstanceSpec{
-		ImageId:          req.ImageId,
+		ImageId:          *req.ImageId,
 		SecurityGroupIds: req.SecurityGroupIds,
 		InstanceType:     req.InstanceType,
-		KeyName:          keyname,
+		KeyName:          req.KeyName,
 		UserData:         userdata,
 		Tags:             tags,
 		VolumeSize:       volumesize,
@@ -145,8 +147,8 @@ func (s *Session) doEC2RequestSpotInstances(cli *EC2Client, req PostRequest) {
 		return
 	}
 	var count int32 = 1
-	if req.Count > 0 {
-		count = req.Count
+	if req.Count != nil {
+		count = *req.Count
 	}
 	sirs, err := cli.RequestSpotInstances(count, ec2spec)
 	if err != nil {
@@ -208,13 +210,13 @@ func (s *Session) doEC2Command(req PostRequest) {
 	cmd := req.Command[4:]
 	switch cmd {
 	case "images":
-		distro := req.Distro
-		arch := req.Arch
-		if distro == "" {
-			distro = "amazon"
+		distro := "amazon"
+		arch := "x86_64"
+		if req.Distro != nil {
+			distro = *req.Distro
 		}
-		if arch == "" {
-			arch = "x86_64"
+		if req.Arch == nil {
+			arch = *req.Arch
 		}
 		image, err := cli.GetImage(distro, arch)
 		if err != nil {
@@ -268,11 +270,15 @@ func (s *Session) doEC2Command(req PostRequest) {
 			s.Logf("%s", EC2StateChangeString(i))
 		}
 	case "rename":
-		if req.Name == "" {
+		if req.InstanceId == nil {
+			s.Logf("no instanceid")
+			return
+		}
+		if req.Name == nil {
 			s.Logf("no name")
 			return
 		}
-		cli.InstanceIds = []string{req.InstanceId}
+		cli.InstanceIds = []string{*req.InstanceId}
 		cli.VpcId = nil
 		instances, err := cli.DescribeInstances()
 		if err != nil {
@@ -285,7 +291,7 @@ func (s *Session) doEC2Command(req PostRequest) {
 		}
 		prevname := EC2InstanceName(instances[0])
 		rename := map[string]string{
-			"Name": req.Name,
+			"Name": *req.Name,
 		}
 		cli.SetTags(instances[0], rename)
 		s.Logf("%s: rename %s to %s", *instances[0].InstanceId, prevname, req.Name)
