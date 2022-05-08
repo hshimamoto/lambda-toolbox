@@ -135,7 +135,11 @@ func (s *Session) doEC2RunInstances(cli *EC2Client, req PostRequest) {
 		s.Logf("newEC2InstanceSpec: %v", err)
 		return
 	}
-	instances, err := cli.RunInstances(1, ec2spec)
+	var count int32 = 1
+	if req.Count != nil {
+		count = *req.Count
+	}
+	instances, err := cli.RunInstances(count, ec2spec)
 	if err != nil {
 		s.Logf("RunInstances: %v", err)
 		return
