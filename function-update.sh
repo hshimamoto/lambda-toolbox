@@ -31,15 +31,16 @@ done
 # concat in /tmp
 cmd="exec.concat"
 dest="$zip"
-curl $url -H 'content-type: application/json' -d "{\"command\":\"$cmd\",\"destination\":\"$dest\",\"sources\":[$srcs]}"
+req0="{\"command\":\"$cmd\",\"destination\":\"$dest\",\"sources\":[$srcs]}"
 # upload to s3
 cmd="s3.store"
 dest="code"
 srcs="\"$zip\""
-curl $url -H 'content-type: application/json' -d "{\"command\":\"$cmd\",\"destination\":\"$dest\",\"sources\":[$srcs]}"
+req1="{\"command\":\"$cmd\",\"destination\":\"$dest\",\"sources\":[$srcs]}"
 # finally lambda function update
 cmd="lambda.update"
 dest="code/$zip"
-curl $url -H 'content-type: application/json' -d "{\"command\":\"$cmd\",\"function\":\"$fname\",\"zipfile\":\"$dest\"}"
+req2="{\"command\":\"$cmd\",\"function\":\"$fname\",\"zipfile\":\"$dest\"}"
+curl $url -H 'content-type: application/json' -d "{\"requests\":[$req0,$req1,$req2]}"
 rm -f $files
 echo "done"
