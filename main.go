@@ -32,27 +32,28 @@ func NewSession() *Session {
 }
 
 type PostRequest struct {
-	Command           string   `json:command`
-	Function          string   `json function,omitempty`
-	Zipfile           string   `json zipfile,omitempty`
-	Destination       string   `json destination,omitempty`
-	Sources           []string `json sources,omitempty`
-	InstanceId        *string  `json instanceid,omitempty`
-	InstanceIds       []string `json instanceids,omitempty`
-	VpcId             string   `json vpcid,omitempty`
-	SubnetId          *string  `json subnetid,omitempty`
-	AssociatePublicIp *bool    `json associatepublicip,omitempty`
-	ImageId           *string  `json imageid,omitempty`
-	InstanceType      string   `json instancetype,omitempty`
-	KeyName           *string  `json keyname,omitempty`
-	SecurityGroupIds  []string `json securitygroupids,omitempty`
-	UserDataFile      *string  `json userdatafile,omitempty`
-	Name              *string  `json name,omitempty`
-	VolumeSize        *int32   `json volumesize,omitempty`
-	ExecCommand       []string `json execcommand,omitempty`
-	Arch              *string  `json arch,omitempty`
-	Distro            *string  `json distro,omitempty`
-	Count             *int32   `json count,omitempty`
+	Command           string            `json:command`
+	Function          string            `json function,omitempty`
+	Zipfile           string            `json zipfile,omitempty`
+	Destination       string            `json destination,omitempty`
+	Sources           []string          `json sources,omitempty`
+	InstanceId        *string           `json instanceid,omitempty`
+	InstanceIds       []string          `json instanceids,omitempty`
+	VpcId             string            `json vpcid,omitempty`
+	SubnetId          *string           `json subnetid,omitempty`
+	AssociatePublicIp *bool             `json associatepublicip,omitempty`
+	ImageId           *string           `json imageid,omitempty`
+	InstanceType      string            `json instancetype,omitempty`
+	KeyName           *string           `json keyname,omitempty`
+	SecurityGroupIds  []string          `json securitygroupids,omitempty`
+	UserDataFile      *string           `json userdatafile,omitempty`
+	Name              *string           `json name,omitempty`
+	Tags              map[string]string `json tags,omitempty`
+	VolumeSize        *int32            `json volumesize,omitempty`
+	ExecCommand       []string          `json execcommand,omitempty`
+	Arch              *string           `json arch,omitempty`
+	Distro            *string           `json distro,omitempty`
+	Count             *int32            `json count,omitempty`
 }
 
 func (s *Session) Logf(f string, args ...interface{}) {
@@ -111,6 +112,9 @@ func (s *Session) newEC2InstanceSpec(req PostRequest) (*EC2InstanceSpec, error) 
 	tags := map[string]string{
 		"lambda-toolbox": "yes",
 		"Name":           *req.Name,
+	}
+	for k, v := range req.Tags {
+		tags[k] = v
 	}
 	var volumesize int32 = 8
 	if req.VolumeSize != nil {
