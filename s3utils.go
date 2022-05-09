@@ -5,6 +5,8 @@ import (
 	"bytes"
 	"encoding/base64"
 	"io"
+	"os"
+	"path/filepath"
 )
 
 func (b *Bucket) Base64DecodeObject(dst, src string) error {
@@ -32,4 +34,18 @@ func (b *Bucket) ConcatObjects(dst string, srcs []string) error {
 		}
 	}
 	return b.Put(dst, newobj.Bytes())
+}
+
+func (b *Bucket) StoreObject(dst string, srcs []string) error {
+	// every file must be in /tmp
+	for _, src := range srcs {
+		obj, err := os.ReadFile("/tmp/" + src)
+		if err != nil {
+			return err
+		}
+		if err := b.Put(filepath.Join(dst, src), obj); err != nil {
+			return err
+		}
+	}
+	return nil
 }

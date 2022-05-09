@@ -18,21 +18,28 @@ echo $files
 cnt=$(echo $files | wc -l)
 echo $cnt
 
-# upload them
+# upload them in /tmp
 srcs=""
 for i in $files; do
 	echo $i
-	curl $url -F file=@$i
+	curl $url -F tmp=@$i
 	if [ "$srcs" != "" ]; then
 		srcs="$srcs,"
 	fi
-	srcs="$srcs\"tmp/$i\""
+	srcs="$srcs\"$i\""
 done
-# concat
-cmd="s3.concat"
-dest="code/$zip"
+# concat in /tmp
+cmd="exec.concat"
+dest="$zip"
 curl $url -H 'content-type: application/json' -d "{\"command\":\"$cmd\",\"destination\":\"$dest\",\"sources\":[$srcs]}"
+# upload to s3
+cmd="s3.store"
+dest="code"
+srcs="\"$zip\""
+curl $url -H 'content-type: application/json' -d "{\"command\":\"$cmd\",\"destination\":\"$dest\",\"sources\":[$srcs]}"
+# finally lambda function update
 cmd="lambda.update"
+dest="code/$zip"
 curl $url -H 'content-type: application/json' -d "{\"command\":\"$cmd\",\"function\":\"$fname\",\"zipfile\":\"$dest\"}"
 rm -f $files
 echo "done"

@@ -321,6 +321,16 @@ func (s *Session) doS3Command(req PostRequest) {
 			return
 		}
 		s.Logf("concat ok")
+	case "store":
+		if req.Destination == "" || len(req.Sources) == 0 {
+			s.Logf("need destination and sources")
+			return
+		}
+		if err := s.Bucket.StoreObject(req.Destination, req.Sources); err != nil {
+			s.Logf("StoreObject: %v", err)
+			return
+		}
+		s.Logf("stored")
 	}
 }
 
@@ -374,6 +384,16 @@ func (s *Session) doExecCommand(req PostRequest) {
 			return
 		}
 		s.LogLines(lines)
+	case "concat":
+		if req.Destination == "" || len(req.Sources) == 0 {
+			s.Logf("need destination and sources")
+			return
+		}
+		if err := ExecConcat(req.Destination, req.Sources); err != nil {
+			s.Logf("ExecConcat: %v", err)
+			return
+		}
+		s.Logf("concat ok")
 	case "run":
 		if req.ExecCommand == nil {
 			s.Logf("no execcommand")
