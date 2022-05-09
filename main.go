@@ -113,6 +113,15 @@ func (s *Session) newEC2InstanceSpec(req PostRequest) (*EC2InstanceSpec, error) 
 		"lambda-toolbox": "yes",
 		"Name":           *req.Name,
 	}
+	envtag := os.Getenv("TAGS")
+	if envtag != "" {
+		var etags map[string]string
+		if json.Unmarshal([]byte(envtag), &etags) == nil {
+			for k, v := range etags {
+				tags[k] = v
+			}
+		}
+	}
 	for k, v := range req.Tags {
 		tags[k] = v
 	}
