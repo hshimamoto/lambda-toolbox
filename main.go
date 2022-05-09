@@ -54,6 +54,7 @@ type PostRequest struct {
 	Arch              *string           `json arch,omitempty`
 	Distro            *string           `json distro,omitempty`
 	Count             *int32            `json count,omitempty`
+	Requests          []PostRequest     `json requests,omitempty`
 }
 
 func (s *Session) Logf(f string, args ...interface{}) {
@@ -421,6 +422,26 @@ func (s *Session) doExecCommand(req PostRequest) {
 	}
 }
 
+func (s *Session) handlePostRequest(req PostRequest) {
+	if req.Command != "" {
+		a := strings.Split(req.Command, ".")
+		switch a[0] {
+		case "ec2":
+			s.doEC2Command(req)
+		case "s3":
+			s.doS3Command(req)
+		case "lambda":
+			s.doLambdaCommand(req)
+		case "exec":
+			s.doExecCommand(req)
+		}
+		return
+	}
+	for _, r := range req.Requests {
+		s.handlePostRequest(r)
+	}
+}
+
 func (s *Session) handleJSONRequest(body []byte) {
 	var req PostRequest
 	err := json.Unmarshal(body, &req)
@@ -428,22 +449,7 @@ func (s *Session) handleJSONRequest(body []byte) {
 		s.Logf("Unmarshal: %v", err)
 		return
 	}
-	if req.Command[0:4] == "ec2." {
-		s.doEC2Command(req)
-		return
-	}
-	if req.Command[0:3] == "s3." {
-		s.doS3Command(req)
-		return
-	}
-	if req.Command[0:7] == "lambda." {
-		s.doLambdaCommand(req)
-		return
-	}
-	if req.Command[0:5] == "exec." {
-		s.doExecCommand(req)
-		return
-	}
+	s.handlePostRequest(req)
 }
 
 func (s *Session) handleMultipartRequestSubpartS3(key string, obj []byte) {
