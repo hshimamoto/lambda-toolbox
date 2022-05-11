@@ -260,6 +260,15 @@ func (s *Session) doEC2Command(req PostRequest) {
 		for _, nic := range nics {
 			s.Logf("%s", EC2NetworkInterfaceString(nic))
 		}
+	case "vols":
+		vols, err := cli.DescribeVolumes()
+		if err != nil {
+			s.Logf("DescribeVolumes: %v", err)
+			return
+		}
+		for _, vol := range vols {
+			s.Logf("%s", EC2VolumeString(vol))
+		}
 	case "images":
 		distro := "amazon"
 		arch := "x86_64"

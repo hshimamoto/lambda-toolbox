@@ -98,6 +98,15 @@ func (cli *EC2Client) DescribeNetworkInterfaces() ([]types.NetworkInterface, err
 	return output.NetworkInterfaces, nil
 }
 
+func (cli *EC2Client) DescribeVolumes() ([]types.Volume, error) {
+	input := &ec2.DescribeVolumesInput{}
+	output, err := cli.client.DescribeVolumes(context.TODO(), input)
+	if err != nil {
+		return nil, err
+	}
+	return output.Volumes, nil
+}
+
 func (cli *EC2Client) RequestSpotInstances(count int32, ec2spec *EC2InstanceSpec) ([]types.SpotInstanceRequest, error) {
 	netspecs, securitygroupids := getNetworkInterfaceSpecification(ec2spec)
 	ebsoptimized := true

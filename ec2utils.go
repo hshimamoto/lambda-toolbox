@@ -116,6 +116,28 @@ func EC2NetworkInterfaceString(nic types.NetworkInterface) string {
 		*nic.PrivateIpAddress, pubip, keyval)
 }
 
+func EC2VolumeString(vol types.Volume) string {
+	tags, _ := EC2GetTagsAndName(vol.Tags)
+	keyval := []string{}
+	for k, v := range tags {
+		keyval = append(keyval, fmt.Sprintf("%s:%s", k, v))
+	}
+	sort.Slice(keyval, func(a, b int) bool {
+		return keyval[a] < keyval[b]
+	})
+	attach := ""
+	for _, att := range vol.Attachments {
+		attach = *att.InstanceId
+	}
+	var size int32 = 0
+	if vol.Size != nil {
+		size = *vol.Size
+	}
+	return fmt.Sprintf("%s:%s:%d:%s:%v",
+		*vol.VolumeId, vol.VolumeType, size,
+		attach, keyval)
+}
+
 func EC2ImageString(i types.Image) string {
 	return fmt.Sprintf("%s:%s:%s",
 		*i.ImageId, *i.Name, *i.Description)
