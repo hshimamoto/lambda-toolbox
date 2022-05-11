@@ -46,6 +46,16 @@ func EC2InstanceString(i types.Instance) string {
 		strings.Join(vals, ","))
 }
 
+func EC2VpcString(v types.Vpc) string {
+	name := ""
+	for _, t := range v.Tags {
+		if *t.Key == "Name" {
+			name = *t.Value
+		}
+	}
+	return fmt.Sprintf("%s:%s", *v.VpcId, name)
+}
+
 func EC2ImageString(i types.Image) string {
 	return fmt.Sprintf("%s:%s:%s",
 		*i.ImageId, *i.Name, *i.Description)

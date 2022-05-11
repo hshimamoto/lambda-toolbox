@@ -233,6 +233,15 @@ func (s *Session) doEC2Command(req PostRequest) {
 	}
 	cmd := req.Command[4:]
 	switch cmd {
+	case "vpcs":
+		vpcs, err := cli.DescribeVpcs()
+		if err != nil {
+			s.Logf("DescribeVpcs: %v", err)
+			return
+		}
+		for _, vpc := range vpcs {
+			s.Logf("%s", EC2VpcString(vpc))
+		}
 	case "images":
 		distro := "amazon"
 		arch := "x86_64"

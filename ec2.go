@@ -71,6 +71,15 @@ func (cli *EC2Client) DescribeInstances() ([]types.Instance, error) {
 	return instances, nil
 }
 
+func (cli *EC2Client) DescribeVpcs() ([]types.Vpc, error) {
+	input := &ec2.DescribeVpcsInput{}
+	output, err := cli.client.DescribeVpcs(context.TODO(), input)
+	if err != nil {
+		return nil, err
+	}
+	return output.Vpcs, nil
+}
+
 func (cli *EC2Client) RequestSpotInstances(count int32, ec2spec *EC2InstanceSpec) ([]types.SpotInstanceRequest, error) {
 	netspecs, securitygroupids := getNetworkInterfaceSpecification(ec2spec)
 	ebsoptimized := true
