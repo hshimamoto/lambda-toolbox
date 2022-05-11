@@ -6,6 +6,7 @@ require (
 	github.com/aws/aws-lambda-go v1.31.1
 	github.com/aws/aws-sdk-go-v2/config v1.15.4
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.38.0
+	github.com/aws/aws-sdk-go-v2/service/ecs v1.18.6
 	github.com/aws/aws-sdk-go-v2/service/lambda v1.22.1
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.26.7
 )

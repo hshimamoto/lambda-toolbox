@@ -358,6 +358,39 @@ func (s *Session) doEC2Command(req PostRequest) {
 	}
 }
 
+func (s *Session) doECSCommand(req PostRequest) {
+	cli, err := NewECSClient()
+	if err != nil {
+		s.Logf("NewECSClient: %v", err)
+		return
+	}
+	cmd := req.Command[4:]
+	switch cmd {
+	case "clusters":
+		// DescribeClusters API requires cluster names or ARNs
+		// first get ARNs with ListClusters
+		s.Logf("list clusters")
+		arns, err := cli.ListClusters()
+		if err != nil {
+			s.Logf("ListClusters: %v", err)
+			return
+		}
+		for _, arn := range arns {
+			s.Logf("%s", arn)
+		}
+		// then, call DescribeClusters with ARNs
+		s.Logf("describe clusters")
+		cls, err := cli.DescribeClusters(arns)
+		if err != nil {
+			s.Logf("DescribeClusters: %v", err)
+			return
+		}
+		for _, c := range cls {
+			s.Logf("%s", *c.ClusterName)
+		}
+	}
+}
+
 func (s *Session) doS3Command(req PostRequest) {
 	cmd := req.Command[3:]
 	switch cmd {
@@ -464,6 +497,8 @@ func (s *Session) handlePostRequest(req PostRequest) {
 		switch a[0] {
 		case "ec2":
 			s.doEC2Command(req)
+		case "ecs":
+			s.doECSCommand(req)
 		case "s3":
 			s.doS3Command(req)
 		case "lambda":
