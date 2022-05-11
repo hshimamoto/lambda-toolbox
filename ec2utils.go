@@ -64,6 +64,30 @@ func EC2SecurityGroupString(sg types.SecurityGroup) string {
 	return fmt.Sprintf("%s:%s:%s", *sg.GroupId, groupname, *sg.VpcId)
 }
 
+func EC2NetworkInterfaceString(nic types.NetworkInterface) string {
+	attach := ""
+	if nic.Attachment != nil {
+		if nic.Attachment.InstanceId != nil {
+			attach = *nic.Attachment.InstanceId
+		}
+	}
+	pubip := ""
+	if nic.Association != nil {
+		assoc := nic.Association
+		if assoc.PublicIp != nil {
+			pubip = *assoc.PublicIp
+		} else if assoc.CarrierIp != nil {
+			pubip = *assoc.CarrierIp
+		}
+	}
+	return fmt.Sprintf("%s:%s:%s:%s:%s:%s",
+		*nic.NetworkInterfaceId,
+		*nic.VpcId,
+		*nic.SubnetId,
+		attach,
+		*nic.PrivateIpAddress, pubip)
+}
+
 func EC2ImageString(i types.Image) string {
 	return fmt.Sprintf("%s:%s:%s",
 		*i.ImageId, *i.Name, *i.Description)

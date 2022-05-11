@@ -251,6 +251,15 @@ func (s *Session) doEC2Command(req PostRequest) {
 		for _, sg := range sgs {
 			s.Logf("%s", EC2SecurityGroupString(sg))
 		}
+	case "nics":
+		nics, err := cli.DescribeNetworkInterfaces()
+		if err != nil {
+			s.Logf("DescribeNetworkInterfaces: %v", err)
+			return
+		}
+		for _, nic := range nics {
+			s.Logf("%s", EC2NetworkInterfaceString(nic))
+		}
 	case "images":
 		distro := "amazon"
 		arch := "x86_64"
