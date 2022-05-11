@@ -4,10 +4,22 @@ package main
 import (
 	"fmt"
 	"sort"
-	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 )
+
+func EC2GetTagsAndName(tags []types.Tag) (map[string]string, *string) {
+	tagmap := map[string]string{}
+	var name *string = nil
+	for _, t := range tags {
+		if *t.Key == "Name" {
+			name = t.Value
+			continue
+		}
+		tagmap[*t.Key] = *t.Value
+	}
+	return tagmap, name
+}
 
 func EC2InstanceName(i types.Instance) string {
 	for _, t := range i.Tags {
@@ -24,47 +36,63 @@ func EC2InstanceString(i types.Instance) string {
 	if i.PublicIpAddress != nil {
 		pubip = *i.PublicIpAddress
 	}
-	tags := map[string]string{}
-	keys := []string{}
-	for _, t := range i.Tags {
-		if *t.Key == "Name" {
-			name = *t.Value
-			continue
-		}
-		tags[*t.Key] = *t.Value
-		keys = append(keys, *t.Key)
+	tags, namep := EC2GetTagsAndName(i.Tags)
+	if namep != nil {
+		name = *namep
 	}
-	sort.Slice(keys, func(a, b int) bool {
-		return keys[a] < keys[b]
+	keyval := []string{}
+	for k, v := range tags {
+		keyval = append(keyval, fmt.Sprintf("%s:%s", k, v))
+	}
+	sort.Slice(keyval, func(a, b int) bool {
+		return keyval[a] < keyval[b]
 	})
-	vals := []string{}
-	for _, k := range keys {
-		vals = append(vals, fmt.Sprintf("%s:%s", k, tags[k]))
-	}
-	return fmt.Sprintf("%s:%s:%s:%s:%s:[%s]",
-		*i.InstanceId, name, i.InstanceType, i.State.Name, pubip,
-		strings.Join(vals, ","))
+	return fmt.Sprintf("%s:%s:%s:%s:%s:%v",
+		*i.InstanceId, name, i.InstanceType, i.State.Name, pubip, keyval)
 }
 
 func EC2VpcString(v types.Vpc) string {
+	tags, namep := EC2GetTagsAndName(v.Tags)
 	name := ""
-	for _, t := range v.Tags {
-		if *t.Key == "Name" {
-			name = *t.Value
-		}
+	if namep != nil {
+		name = *namep
 	}
-	return fmt.Sprintf("%s:%s", *v.VpcId, name)
+	keyval := []string{}
+	for k, v := range tags {
+		keyval = append(keyval, fmt.Sprintf("%s:%s", k, v))
+	}
+	sort.Slice(keyval, func(a, b int) bool {
+		return keyval[a] < keyval[b]
+	})
+	return fmt.Sprintf("%s:%s:%v", *v.VpcId, name, keyval)
 }
 
 func EC2SecurityGroupString(sg types.SecurityGroup) string {
+	tags, _ := EC2GetTagsAndName(sg.Tags)
+	keyval := []string{}
+	for k, v := range tags {
+		keyval = append(keyval, fmt.Sprintf("%s:%s", k, v))
+	}
+	sort.Slice(keyval, func(a, b int) bool {
+		return keyval[a] < keyval[b]
+	})
 	groupname := ""
 	if sg.GroupName != nil {
 		groupname = *sg.GroupName
 	}
-	return fmt.Sprintf("%s:%s:%s", *sg.GroupId, groupname, *sg.VpcId)
+	return fmt.Sprintf("%s:%s:%s:%v",
+		*sg.GroupId, groupname, *sg.VpcId, keyval)
 }
 
 func EC2NetworkInterfaceString(nic types.NetworkInterface) string {
+	tags, _ := EC2GetTagsAndName(nic.TagSet)
+	keyval := []string{}
+	for k, v := range tags {
+		keyval = append(keyval, fmt.Sprintf("%s:%s", k, v))
+	}
+	sort.Slice(keyval, func(a, b int) bool {
+		return keyval[a] < keyval[b]
+	})
 	attach := ""
 	if nic.Attachment != nil {
 		if nic.Attachment.InstanceId != nil {
@@ -80,12 +108,12 @@ func EC2NetworkInterfaceString(nic types.NetworkInterface) string {
 			pubip = *assoc.CarrierIp
 		}
 	}
-	return fmt.Sprintf("%s:%s:%s:%s:%s:%s",
+	return fmt.Sprintf("%s:%s:%s:%s:%s:%s:%v",
 		*nic.NetworkInterfaceId,
 		*nic.VpcId,
 		*nic.SubnetId,
 		attach,
-		*nic.PrivateIpAddress, pubip)
+		*nic.PrivateIpAddress, pubip, keyval)
 }
 
 func EC2ImageString(i types.Image) string {
