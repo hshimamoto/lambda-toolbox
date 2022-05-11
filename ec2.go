@@ -80,6 +80,15 @@ func (cli *EC2Client) DescribeVpcs() ([]types.Vpc, error) {
 	return output.Vpcs, nil
 }
 
+func (cli *EC2Client) DescribeSecurityGroups() ([]types.SecurityGroup, error) {
+	input := &ec2.DescribeSecurityGroupsInput{}
+	output, err := cli.client.DescribeSecurityGroups(context.TODO(), input)
+	if err != nil {
+		return nil, err
+	}
+	return output.SecurityGroups, nil
+}
+
 func (cli *EC2Client) RequestSpotInstances(count int32, ec2spec *EC2InstanceSpec) ([]types.SpotInstanceRequest, error) {
 	netspecs, securitygroupids := getNetworkInterfaceSpecification(ec2spec)
 	ebsoptimized := true

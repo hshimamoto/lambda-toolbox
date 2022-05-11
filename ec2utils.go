@@ -56,6 +56,14 @@ func EC2VpcString(v types.Vpc) string {
 	return fmt.Sprintf("%s:%s", *v.VpcId, name)
 }
 
+func EC2SecurityGroupString(sg types.SecurityGroup) string {
+	groupname := ""
+	if sg.GroupName != nil {
+		groupname = *sg.GroupName
+	}
+	return fmt.Sprintf("%s:%s:%s", *sg.GroupId, groupname, *sg.VpcId)
+}
+
 func EC2ImageString(i types.Image) string {
 	return fmt.Sprintf("%s:%s:%s",
 		*i.ImageId, *i.Name, *i.Description)

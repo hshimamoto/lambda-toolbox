@@ -242,6 +242,15 @@ func (s *Session) doEC2Command(req PostRequest) {
 		for _, vpc := range vpcs {
 			s.Logf("%s", EC2VpcString(vpc))
 		}
+	case "sgs":
+		sgs, err := cli.DescribeSecurityGroups()
+		if err != nil {
+			s.Logf("DescribeSecurityGroups: %v", err)
+			return
+		}
+		for _, sg := range sgs {
+			s.Logf("%s", EC2SecurityGroupString(sg))
+		}
 	case "images":
 		distro := "amazon"
 		arch := "x86_64"
