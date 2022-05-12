@@ -43,3 +43,23 @@ func (cli *ECSClient) ListClusters() ([]string, error) {
 	}
 	return output.ClusterArns, nil
 }
+
+func (cli *ECSClient) DescribeTaskDefinition(arn string) (*types.TaskDefinition, error) {
+	input := &ecs.DescribeTaskDefinitionInput{
+		TaskDefinition: &arn,
+	}
+	output, err := cli.client.DescribeTaskDefinition(context.TODO(), input)
+	if err != nil {
+		return nil, err
+	}
+	return output.TaskDefinition, nil
+}
+
+func (cli *ECSClient) ListTaskDefinitions() ([]string, error) {
+	input := &ecs.ListTaskDefinitionsInput{}
+	output, err := cli.client.ListTaskDefinitions(context.TODO(), input)
+	if err != nil {
+		return nil, err
+	}
+	return output.TaskDefinitionArns, nil
+}

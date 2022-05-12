@@ -37,6 +37,7 @@ type PostRequest struct {
 	Zipfile           string            `json zipfile,omitempty`
 	Destination       string            `json destination,omitempty`
 	Sources           []string          `json sources,omitempty`
+	ARN               *string           `json arn,omitempty`
 	InstanceId        *string           `json instanceid,omitempty`
 	InstanceIds       []string          `json instanceids,omitempty`
 	VpcId             string            `json vpcid,omitempty`
@@ -388,6 +389,30 @@ func (s *Session) doECSCommand(req PostRequest) {
 		for _, c := range cls {
 			s.Logf("%s", *c.ClusterName)
 		}
+	case "taskdefs":
+		arns, err := cli.ListTaskDefinitions()
+		if err != nil {
+			s.Logf("ListTaskDefinitions: %v", err)
+			return
+		}
+		for _, arn := range arns {
+			s.Logf("%s", arn)
+		}
+	case "taskdef":
+		if req.ARN == nil {
+			s.Logf("need arn")
+			return
+		}
+		taskdefp, err := cli.DescribeTaskDefinition(*req.ARN)
+		if err != nil {
+			s.Logf("DescribeTaskDefinition: %v", err)
+			return
+		}
+		if taskdefp == nil {
+			s.Logf("TaskDefinition nil\n")
+			return
+		}
+		s.Logf("%s:%d", *taskdefp.Family, taskdefp.Revision)
 	}
 }
 
