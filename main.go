@@ -354,7 +354,7 @@ func (s *Session) doEC2Command(req PostRequest) {
 			"Name": *req.Name,
 		}
 		cli.SetTags(instances[0], rename)
-		s.Logf("%s: rename %s to %s", *instances[0].InstanceId, prevname, req.Name)
+		s.Logf("%s: rename %s to %s", *instances[0].InstanceId, prevname, *req.Name)
 	}
 }
 
