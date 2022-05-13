@@ -414,6 +414,19 @@ func (s *Session) doECSCommand(req PostRequest) {
 			return
 		}
 		s.Logf("%s:%d", *taskdefp.Family, taskdefp.Revision)
+	case "tasks":
+		if req.Cluster == nil {
+			s.Logf("need cluster")
+			return
+		}
+		taskarns, err := cli.ListTasks(*req.Cluster)
+		if err != nil {
+			s.Logf("ListTasks: %v", err)
+			return
+		}
+		for _, t := range taskarns {
+			s.Logf("%s", t)
+		}
 	case "runtask":
 		if req.ARN == nil {
 			s.Logf("need arn")
@@ -454,6 +467,21 @@ func (s *Session) doECSCommand(req PostRequest) {
 			return
 		}
 		s.Logf("starting %s", *tasks[0].TaskArn)
+	case "stoptask":
+		if req.Cluster == nil {
+			s.Logf("need cluster")
+			return
+		}
+		if req.ARN == nil {
+			s.Logf("need arn")
+			return
+		}
+		task, err := cli.StopTask(*req.ARN, *req.Cluster)
+		if err != nil {
+			s.Logf("StopTask: %v", err)
+			return
+		}
+		s.Logf("stopping %s", *task.TaskArn)
 	}
 }
 

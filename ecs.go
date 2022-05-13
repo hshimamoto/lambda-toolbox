@@ -64,6 +64,17 @@ func (cli *ECSClient) ListTaskDefinitions() ([]string, error) {
 	return output.TaskDefinitionArns, nil
 }
 
+func (cli *ECSClient) ListTasks(cluster string) ([]string, error) {
+	input := &ecs.ListTasksInput{
+		Cluster: &cluster,
+	}
+	output, err := cli.client.ListTasks(context.TODO(), input)
+	if err != nil {
+		return nil, err
+	}
+	return output.TaskArns, nil
+}
+
 func (cli *ECSClient) RunTask(taskdefp *types.TaskDefinition, name, cluster, subnet string, sgs, cmd []string) ([]types.Task, error) {
 	var count int32 = 1
 	input := &ecs.RunTaskInput{
@@ -95,4 +106,16 @@ func (cli *ECSClient) RunTask(taskdefp *types.TaskDefinition, name, cluster, sub
 		return nil, err
 	}
 	return output.Tasks, nil
+}
+
+func (cli *ECSClient) StopTask(arn, cluster string) (*types.Task, error) {
+	input := &ecs.StopTaskInput{
+		Task:    &arn,
+		Cluster: &cluster,
+	}
+	output, err := cli.client.StopTask(context.TODO(), input)
+	if err != nil {
+		return nil, err
+	}
+	return output.Task, nil
 }
