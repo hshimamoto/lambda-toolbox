@@ -63,3 +63,36 @@ func (cli *ECSClient) ListTaskDefinitions() ([]string, error) {
 	}
 	return output.TaskDefinitionArns, nil
 }
+
+func (cli *ECSClient) RunTask(taskdefp *types.TaskDefinition, name, cluster, subnet string, sgs, cmd []string) ([]types.Task, error) {
+	var count int32 = 1
+	input := &ecs.RunTaskInput{
+		TaskDefinition:       taskdefp.TaskDefinitionArn,
+		Cluster:              &cluster,
+		Count:                &count,
+		EnableECSManagedTags: true,
+		EnableExecuteCommand: false,
+		LaunchType:           types.LaunchTypeFargate,
+		NetworkConfiguration: &types.NetworkConfiguration{
+			AwsvpcConfiguration: &types.AwsVpcConfiguration{
+				Subnets:        []string{subnet},
+				AssignPublicIp: types.AssignPublicIpEnabled,
+				SecurityGroups: sgs,
+			},
+		},
+		Overrides: &types.TaskOverride{
+			ContainerOverrides: []types.ContainerOverride{
+				types.ContainerOverride{
+					Command: cmd,
+					Name:    &name,
+				},
+			},
+			TaskRoleArn: taskdefp.TaskRoleArn,
+		},
+	}
+	output, err := cli.client.RunTask(context.TODO(), input)
+	if err != nil {
+		return nil, err
+	}
+	return output.Tasks, nil
+}

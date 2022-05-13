@@ -55,6 +55,7 @@ type PostRequest struct {
 	Arch              *string           `json arch,omitempty`
 	Distro            *string           `json distro,omitempty`
 	Count             *int32            `json count,omitempty`
+	Cluster           *string           `json cluster,omitempty`
 	Requests          []PostRequest     `json requests,omitempty`
 }
 
@@ -413,6 +414,46 @@ func (s *Session) doECSCommand(req PostRequest) {
 			return
 		}
 		s.Logf("%s:%d", *taskdefp.Family, taskdefp.Revision)
+	case "runtask":
+		if req.ARN == nil {
+			s.Logf("need arn")
+			return
+		}
+		if req.Name == nil {
+			s.Logf("need name")
+			return
+		}
+		if req.Cluster == nil {
+			s.Logf("need cluster")
+			return
+		}
+		if req.SubnetId == nil {
+			s.Logf("need subnetid")
+			return
+		}
+		if req.SecurityGroupIds == nil {
+			s.Logf("need securitygroupids")
+			return
+		}
+		if req.ExecCommand == nil {
+			s.Logf("need execommand")
+			return
+		}
+		taskdefp, err := cli.DescribeTaskDefinition(*req.ARN)
+		if err != nil {
+			s.Logf("DescribeTaskDefinition: %v", err)
+			return
+		}
+		if taskdefp == nil {
+			s.Logf("TaskDefinition nil\n")
+			return
+		}
+		tasks, err := cli.RunTask(taskdefp, *req.Name, *req.Cluster, *req.SubnetId, req.SecurityGroupIds, req.ExecCommand)
+		if err != nil {
+			s.Logf("RunTask: %v", err)
+			return
+		}
+		s.Logf("starting %s", *tasks[0].TaskArn)
 	}
 }
 
