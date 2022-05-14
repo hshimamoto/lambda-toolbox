@@ -278,7 +278,7 @@ func (s *Session) doEC2Command(req PostRequest) {
 		if req.Distro != nil {
 			distro = *req.Distro
 		}
-		if req.Arch == nil {
+		if req.Arch != nil {
 			arch = *req.Arch
 		}
 		image, err := cli.GetImage(distro, arch)
