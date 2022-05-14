@@ -234,6 +234,17 @@ func (cli *EC2Client) RunInstances(count int32, ec2spec *EC2InstanceSpec) ([]typ
 	return output.Instances, nil
 }
 
+func (cli *EC2Client) ModifyInstanceAttributeType(instanceid, instancetype string) error {
+	input := &ec2.ModifyInstanceAttributeInput{
+		InstanceId: &instanceid,
+		InstanceType: &types.AttributeValue{
+			Value: &instancetype,
+		},
+	}
+	_, err := cli.client.ModifyInstanceAttribute(context.TODO(), input)
+	return err
+}
+
 func getNetworkInterfaceSpecification(ec2spec *EC2InstanceSpec) ([]types.InstanceNetworkInterfaceSpecification, []string) {
 	if ec2spec.SubnetId == nil {
 		return nil, ec2spec.SecurityGroupIds

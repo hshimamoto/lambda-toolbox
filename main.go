@@ -360,6 +360,28 @@ func (s *Session) doEC2Command(req PostRequest) {
 		}
 		cli.SetTags(instances[0], rename)
 		s.Logf("%s: rename %s to %s", *instances[0].InstanceId, prevname, *req.Name)
+	case "change":
+		if len(req.args) == 0 {
+			s.Logf("need change attributename")
+			return
+		}
+		if req.args[0] != "type" {
+			s.Logf("support only type")
+			return
+		}
+		if req.InstanceId == nil {
+			s.Logf("no instanceid")
+			return
+		}
+		if req.InstanceType == "" {
+			s.Logf("no instancetype")
+			return
+		}
+		if err := cli.ModifyInstanceAttributeType(*req.InstanceId, req.InstanceType); err != nil {
+			s.Logf("ModifyInstanceAttributeType: %v", err)
+			return
+		}
+		s.Logf("instance type has been modified")
 	}
 }
 
