@@ -58,6 +58,9 @@ type PostRequest struct {
 	Cluster           *string           `json cluster,omitempty`
 	Nics              []string          `json nics,omitempty`
 	Requests          []PostRequest     `json requests,omitempty`
+	// parsed
+	cmd  string
+	args []string
 }
 
 func (s *Session) Logf(f string, args ...interface{}) {
@@ -234,8 +237,7 @@ func (s *Session) doEC2Command(req PostRequest) {
 		s.Logf("NewEC2Client: %v", err)
 		return
 	}
-	cmd := req.Command[4:]
-	switch cmd {
+	switch req.cmd {
 	case "vpcs":
 		vpcs, err := cli.DescribeVpcs()
 		if err != nil {
@@ -367,8 +369,7 @@ func (s *Session) doECSCommand(req PostRequest) {
 		s.Logf("NewECSClient: %v", err)
 		return
 	}
-	cmd := req.Command[4:]
-	switch cmd {
+	switch req.cmd {
 	case "clusters":
 		// DescribeClusters API requires cluster names or ARNs
 		// first get ARNs with ListClusters
@@ -502,8 +503,7 @@ func (s *Session) doECSCommand(req PostRequest) {
 }
 
 func (s *Session) doS3Command(req PostRequest) {
-	cmd := req.Command[3:]
-	switch cmd {
+	switch req.cmd {
 	case "concat":
 		if req.Destination == "" || len(req.Sources) == 0 {
 			s.Logf("need destination and sources")
@@ -528,8 +528,7 @@ func (s *Session) doS3Command(req PostRequest) {
 }
 
 func (s *Session) doLambdaCommand(req PostRequest) {
-	cmd := req.Command[7:]
-	switch cmd {
+	switch req.cmd {
 	case "update":
 		if req.Function == "" || req.Zipfile == "" {
 			s.Logf("need function and zipfile")
@@ -553,8 +552,7 @@ func (s *Session) doExecCommand(req PostRequest) {
 	if dir == "" {
 		dir = "/tmp"
 	}
-	cmd := req.Command[5:]
-	switch cmd {
+	switch req.cmd {
 	case "unzip":
 		if req.Zipfile == "" {
 			s.Logf("no zipfile")
@@ -603,18 +601,24 @@ func (s *Session) doExecCommand(req PostRequest) {
 
 func (s *Session) handlePostRequest(req PostRequest) {
 	if req.Command != "" {
+		// parse
 		a := strings.Split(req.Command, ".")
-		switch a[0] {
-		case "ec2":
-			s.doEC2Command(req)
-		case "ecs":
-			s.doECSCommand(req)
-		case "s3":
-			s.doS3Command(req)
-		case "lambda":
-			s.doLambdaCommand(req)
-		case "exec":
-			s.doExecCommand(req)
+		if len(a) == 1 {
+			s.Logf("command parse error: %s", req.Command)
+			return
+		}
+		key := a[0]
+		req.cmd = a[1]
+		req.args = a[2:]
+		domap := map[string]func(PostRequest){
+			"ec2":    s.doEC2Command,
+			"ecs":    s.doECSCommand,
+			"s3":     s.doS3Command,
+			"lambda": s.doLambdaCommand,
+			"exec":   s.doExecCommand,
+		}
+		if f, ok := domap[key]; ok {
+			f(req)
 		}
 		return
 	}
