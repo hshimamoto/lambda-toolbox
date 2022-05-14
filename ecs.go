@@ -64,6 +64,18 @@ func (cli *ECSClient) ListTaskDefinitions() ([]string, error) {
 	return output.TaskDefinitionArns, nil
 }
 
+func (cli *ECSClient) DescribeTasks(arns []string, cluster string) ([]types.Task, error) {
+	input := &ecs.DescribeTasksInput{
+		Tasks:   arns,
+		Cluster: &cluster,
+	}
+	output, err := cli.client.DescribeTasks(context.TODO(), input)
+	if err != nil {
+		return nil, err
+	}
+	return output.Tasks, nil
+}
+
 func (cli *ECSClient) ListTasks(cluster string) ([]string, error) {
 	input := &ecs.ListTasksInput{
 		Cluster: &cluster,

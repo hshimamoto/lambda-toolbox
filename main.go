@@ -424,8 +424,19 @@ func (s *Session) doECSCommand(req PostRequest) {
 			s.Logf("ListTasks: %v", err)
 			return
 		}
-		for _, t := range taskarns {
-			s.Logf("%s", t)
+		tasks, err := cli.DescribeTasks(taskarns, *req.Cluster)
+		if err != nil {
+			s.Logf("DescribeTasks: %v", err)
+			return
+		}
+		for _, t := range tasks {
+			s.Logf("%s", *t.TaskArn)
+			s.Logf(" def: %s", *t.TaskDefinitionArn)
+			for _, a := range t.Attachments {
+				for _, kv := range a.Details {
+					s.Logf("  %s: %s", *kv.Name, *kv.Value)
+				}
+			}
 		}
 	case "runtask":
 		if req.ARN == nil {
