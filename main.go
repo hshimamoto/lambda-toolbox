@@ -56,6 +56,7 @@ type PostRequest struct {
 	Distro            *string           `json distro,omitempty`
 	Count             *int32            `json count,omitempty`
 	Cluster           *string           `json cluster,omitempty`
+	Nics              []string          `json nics,omitempty`
 	Requests          []PostRequest     `json requests,omitempty`
 }
 
@@ -254,7 +255,7 @@ func (s *Session) doEC2Command(req PostRequest) {
 			s.Logf("%s", EC2SecurityGroupString(sg))
 		}
 	case "nics":
-		nics, err := cli.DescribeNetworkInterfaces()
+		nics, err := cli.DescribeNetworkInterfaces(req.Nics)
 		if err != nil {
 			s.Logf("DescribeNetworkInterfaces: %v", err)
 			return

@@ -89,8 +89,10 @@ func (cli *EC2Client) DescribeSecurityGroups() ([]types.SecurityGroup, error) {
 	return output.SecurityGroups, nil
 }
 
-func (cli *EC2Client) DescribeNetworkInterfaces() ([]types.NetworkInterface, error) {
-	input := &ec2.DescribeNetworkInterfacesInput{}
+func (cli *EC2Client) DescribeNetworkInterfaces(nics []string) ([]types.NetworkInterface, error) {
+	input := &ec2.DescribeNetworkInterfacesInput{
+		NetworkInterfaceIds: nics,
+	}
 	output, err := cli.client.DescribeNetworkInterfaces(context.TODO(), input)
 	if err != nil {
 		return nil, err
