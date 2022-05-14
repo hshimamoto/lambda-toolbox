@@ -425,6 +425,10 @@ func (s *Session) doECSCommand(req PostRequest) {
 			s.Logf("ListTasks: %v", err)
 			return
 		}
+		if len(taskarns) == 0 {
+			s.Logf("no tasks")
+			return
+		}
 		tasks, err := cli.DescribeTasks(taskarns, *req.Cluster)
 		if err != nil {
 			s.Logf("DescribeTasks: %v", err)
