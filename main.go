@@ -500,12 +500,21 @@ func (s *Session) doECSCommand(req PostRequest) {
 			s.Logf("TaskDefinition nil\n")
 			return
 		}
-		tasks, err := cli.RunTask(taskdefp, *req.Name, *req.Cluster, *req.SubnetId, req.SecurityGroupIds, req.ExecCommand)
-		if err != nil {
-			s.Logf("RunTask: %v", err)
-			return
+		if len(req.args) > 0 && req.args[0] == "spot" {
+			tasks, err := cli.RunTaskSpot(taskdefp, *req.Name, *req.Cluster, *req.SubnetId, req.SecurityGroupIds, req.ExecCommand)
+			if err != nil {
+				s.Logf("RunTaskSpot: %v", err)
+				return
+			}
+			s.Logf("starting %s", *tasks[0].TaskArn)
+		} else {
+			tasks, err := cli.RunTask(taskdefp, *req.Name, *req.Cluster, *req.SubnetId, req.SecurityGroupIds, req.ExecCommand)
+			if err != nil {
+				s.Logf("RunTask: %v", err)
+				return
+			}
+			s.Logf("starting %s", *tasks[0].TaskArn)
 		}
-		s.Logf("starting %s", *tasks[0].TaskArn)
 	case "stoptask":
 		if req.Cluster == nil {
 			s.Logf("need cluster")
