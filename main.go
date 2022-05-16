@@ -289,7 +289,7 @@ func (s *Session) doEC2Command(req PostRequest) {
 			return
 		}
 		s.Logf("%s", EC2ImageString(image))
-	case "describe":
+	case "describe", "instances":
 		cli.VpcId = nil
 		if req.VpcId != "" {
 			s.Logf("VpcId: %s", req.VpcId)
