@@ -226,6 +226,8 @@ func (s *Session) doEC2RequestSpotInstances(cli *EC2Client, req PostRequest) {
 		// why?
 		return
 	}
+	// mark spot instance
+	ec2spec.Tags["SpotInstance"] = "yes"
 	for _, i := range instances {
 		cli.SetTags(i, ec2spec.Tags)
 	}
