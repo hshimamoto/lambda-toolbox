@@ -604,6 +604,27 @@ func (s *Session) doLambdaCommand(req PostRequest) {
 	}
 }
 
+func (s *Session) doSTSCommand(req PostRequest) {
+	cli, err := NewSTSClient()
+	if err != nil {
+		s.Logf("NewSTSClient: %v", err)
+		return
+	}
+	switch req.cmd {
+	case "switch":
+		if req.ARN == nil {
+			s.Logf("need arn")
+			return
+		}
+		cred, err := cli.AssumeRole(*req.ARN)
+		if err != nil {
+			s.Logf("AssumeRole: %v", err)
+			return
+		}
+		s.Logf("%s %s %s", *cred.AccessKeyId, *cred.SecretAccessKey, *cred.SessionToken)
+	}
+}
+
 func (s *Session) doExecCommand(req PostRequest) {
 	dir := req.Destination
 	if dir == "" {
@@ -672,6 +693,7 @@ func (s *Session) handlePostRequest(req PostRequest) {
 			"ecs":    s.doECSCommand,
 			"s3":     s.doS3Command,
 			"lambda": s.doLambdaCommand,
+			"sts":    s.doSTSCommand,
 			"exec":   s.doExecCommand,
 		}
 		if f, ok := domap[key]; ok {
