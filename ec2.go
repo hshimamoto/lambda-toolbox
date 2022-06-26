@@ -82,6 +82,14 @@ func (cli *EC2Client) DescribeVpcs() ([]types.Vpc, error) {
 
 func (cli *EC2Client) DescribeSecurityGroups() ([]types.SecurityGroup, error) {
 	input := &ec2.DescribeSecurityGroupsInput{}
+	if cli.VpcId != nil {
+		fname := "vpc-id"
+		filter := types.Filter{
+			Name:   &fname,
+			Values: []string{*cli.VpcId},
+		}
+		input.Filters = append(input.Filters, filter)
+	}
 	output, err := cli.client.DescribeSecurityGroups(context.TODO(), input)
 	if err != nil {
 		return nil, err

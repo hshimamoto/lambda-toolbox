@@ -250,6 +250,11 @@ func (s *Session) doEC2Command(req PostRequest) {
 			s.Logf("%s", EC2VpcString(vpc))
 		}
 	case "sgs":
+		cli.VpcId = nil
+		if req.VpcId != "" {
+			s.Logf("VpcId: %s", req.VpcId)
+			cli.VpcId = &req.VpcId
+		}
 		sgs, err := cli.DescribeSecurityGroups()
 		if err != nil {
 			s.Logf("DescribeSecurityGroups: %v", err)
