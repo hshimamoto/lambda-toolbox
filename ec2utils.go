@@ -80,8 +80,39 @@ func EC2SecurityGroupString(sg types.SecurityGroup) string {
 	if sg.GroupName != nil {
 		groupname = *sg.GroupName
 	}
-	return fmt.Sprintf("%s:%s:%s:%v",
-		*sg.GroupId, groupname, *sg.VpcId, keyval)
+	perms := []string{}
+	for _, perm := range sg.IpPermissions {
+		fr := "from"
+		to := "to"
+		pr := "proto"
+		if perm.FromPort != nil {
+			fr = fmt.Sprintf("%d", *perm.FromPort)
+		}
+		if perm.ToPort != nil {
+			to = fmt.Sprintf("%d", *perm.ToPort)
+		}
+		if perm.IpProtocol != nil {
+			pr = *perm.IpProtocol
+			if pr == "-1" {
+				pr = "ALL"
+			}
+		}
+		ipr := []string{}
+		for _, i := range perm.IpRanges {
+			if i.CidrIp != nil {
+				ipr = append(ipr, *i.CidrIp)
+			}
+		}
+		for _, i := range perm.PrefixListIds {
+			if i.PrefixListId != nil {
+				ipr = append(ipr, *i.PrefixListId)
+			}
+		}
+		perms = append(perms, fmt.Sprintf("{%s:%s:%s:%v}",
+			pr, fr, to, ipr))
+	}
+	return fmt.Sprintf("%s:%s:%s:%v:%v",
+		*sg.GroupId, groupname, *sg.VpcId, keyval, perms)
 }
 
 func EC2NetworkInterfaceString(nic types.NetworkInterface) string {
