@@ -249,6 +249,20 @@ func (s *Session) doEC2Command(req PostRequest) {
 		for _, vpc := range vpcs {
 			s.Logf("%s", EC2VpcString(vpc))
 		}
+	case "subnets":
+		cli.VpcId = nil
+		if req.VpcId != "" {
+			s.Logf("VpcId: %s", req.VpcId)
+			cli.VpcId = &req.VpcId
+		}
+		subnets, err := cli.DescribeSubnets()
+		if err != nil {
+			s.Logf("DescribeSubnets: %v", err)
+			return
+		}
+		for _, subnet := range subnets {
+			s.Logf("%s", EC2SubnetString(subnet))
+		}
 	case "sgs":
 		cli.VpcId = nil
 		if req.VpcId != "" {

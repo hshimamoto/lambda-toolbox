@@ -67,6 +67,22 @@ func EC2VpcString(v types.Vpc) string {
 	return fmt.Sprintf("%s:%s:%v", *v.VpcId, name, keyval)
 }
 
+func EC2SubnetString(v types.Subnet) string {
+	tags, namep := EC2GetTagsAndName(v.Tags)
+	name := ""
+	if namep != nil {
+		name = *namep
+	}
+	keyval := []string{}
+	for k, v := range tags {
+		keyval = append(keyval, fmt.Sprintf("%s:%s", k, v))
+	}
+	sort.Slice(keyval, func(a, b int) bool {
+		return keyval[a] < keyval[b]
+	})
+	return fmt.Sprintf("%s:%s:%s:%s:%v", *v.SubnetId, name, *v.AvailabilityZone, *v.VpcId, keyval)
+}
+
 func EC2SecurityGroupString(sg types.SecurityGroup) string {
 	tags, _ := EC2GetTagsAndName(sg.Tags)
 	keyval := []string{}
