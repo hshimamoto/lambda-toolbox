@@ -546,14 +546,14 @@ func (s *Session) doECSCommand(req PostRequest) {
 			return
 		}
 		if len(req.args) > 0 && req.args[0] == "spot" {
-			tasks, err := cli.RunTaskSpot(taskdefp, *req.Name, *req.Cluster, *req.SubnetId, req.SecurityGroupIds, req.ExecCommand)
+			tasks, err := cli.RunTaskSpot(taskdefp, 1, *req.Name, *req.Cluster, *req.SubnetId, req.SecurityGroupIds, req.ExecCommand)
 			if err != nil {
 				s.Logf("RunTaskSpot: %v", err)
 				return
 			}
 			s.Logf("starting %s", *tasks[0].TaskArn)
 		} else {
-			tasks, err := cli.RunTask(taskdefp, *req.Name, *req.Cluster, *req.SubnetId, req.SecurityGroupIds, req.ExecCommand)
+			tasks, err := cli.RunTask(taskdefp, 1, *req.Name, *req.Cluster, *req.SubnetId, req.SecurityGroupIds, req.ExecCommand)
 			if err != nil {
 				s.Logf("RunTask: %v", err)
 				return

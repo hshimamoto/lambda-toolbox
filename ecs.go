@@ -87,8 +87,7 @@ func (cli *ECSClient) ListTasks(cluster string) ([]string, error) {
 	return output.TaskArns, nil
 }
 
-func (cli *ECSClient) RunTask(taskdefp *types.TaskDefinition, name, cluster, subnet string, sgs, cmd []string) ([]types.Task, error) {
-	var count int32 = 1
+func (cli *ECSClient) RunTask(taskdefp *types.TaskDefinition, count int32, name, cluster, subnet string, sgs, cmd []string) ([]types.Task, error) {
 	input := &ecs.RunTaskInput{
 		TaskDefinition:       taskdefp.TaskDefinitionArn,
 		Cluster:              &cluster,
@@ -120,8 +119,7 @@ func (cli *ECSClient) RunTask(taskdefp *types.TaskDefinition, name, cluster, sub
 	return output.Tasks, nil
 }
 
-func (cli *ECSClient) RunTaskSpot(taskdefp *types.TaskDefinition, name, cluster, subnet string, sgs, cmd []string) ([]types.Task, error) {
-	var count int32 = 1
+func (cli *ECSClient) RunTaskSpot(taskdefp *types.TaskDefinition, count int32, name, cluster, subnet string, sgs, cmd []string) ([]types.Task, error) {
 	fargate_spot := "FARGATE_SPOT"
 	input := &ecs.RunTaskInput{
 		TaskDefinition: taskdefp.TaskDefinitionArn,
