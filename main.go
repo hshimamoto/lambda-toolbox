@@ -38,6 +38,7 @@ type PostRequest struct {
 	Destination       string            `json destination,omitempty`
 	Sources           []string          `json sources,omitempty`
 	ARN               *string           `json arn,omitempty`
+	ARNs              []string          `json arns,omitempty`
 	InstanceId        *string           `json instanceid,omitempty`
 	InstanceIds       []string          `json instanceids,omitempty`
 	VpcId             string            `json vpcid,omitempty`
@@ -565,16 +566,22 @@ func (s *Session) doECSCommand(req PostRequest) {
 			s.Logf("need cluster")
 			return
 		}
-		if req.ARN == nil {
-			s.Logf("need arn")
-			return
+		arns := req.ARNs
+		if len(arns) == 0 {
+			if req.ARN == nil {
+				s.Logf("need arn")
+				return
+			}
+			arns = []string{*req.ARN}
 		}
-		task, err := cli.StopTask(*req.ARN, *req.Cluster)
-		if err != nil {
-			s.Logf("StopTask: %v", err)
-			return
+		for _, arn := range arns {
+			task, err := cli.StopTask(arn, *req.Cluster)
+			if err != nil {
+				s.Logf("StopTask: %v", err)
+				continue
+			}
+			s.Logf("stopping %s", *task.TaskArn)
 		}
-		s.Logf("stopping %s", *task.TaskArn)
 	}
 }
 
