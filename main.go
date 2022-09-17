@@ -513,6 +513,14 @@ func (s *Session) doECSCommand(req PostRequest) {
 			}
 		}
 	case "runtask":
+		var count int32 = 1
+		if req.Count != nil {
+			count = *req.Count
+			if count >= 10 {
+				s.Logf("count too large")
+				return
+			}
+		}
 		if req.ARN == nil {
 			s.Logf("need arn")
 			return
@@ -547,19 +555,23 @@ func (s *Session) doECSCommand(req PostRequest) {
 			return
 		}
 		if len(req.args) > 0 && req.args[0] == "spot" {
-			tasks, err := cli.RunTaskSpot(taskdefp, 1, *req.Name, *req.Cluster, *req.SubnetId, req.SecurityGroupIds, req.ExecCommand)
+			tasks, err := cli.RunTaskSpot(taskdefp, count, *req.Name, *req.Cluster, *req.SubnetId, req.SecurityGroupIds, req.ExecCommand)
 			if err != nil {
 				s.Logf("RunTaskSpot: %v", err)
 				return
 			}
-			s.Logf("starting %s", *tasks[0].TaskArn)
+			for _, task := range tasks {
+				s.Logf("starting %s", *task.TaskArn)
+			}
 		} else {
-			tasks, err := cli.RunTask(taskdefp, 1, *req.Name, *req.Cluster, *req.SubnetId, req.SecurityGroupIds, req.ExecCommand)
+			tasks, err := cli.RunTask(taskdefp, count, *req.Name, *req.Cluster, *req.SubnetId, req.SecurityGroupIds, req.ExecCommand)
 			if err != nil {
 				s.Logf("RunTask: %v", err)
 				return
 			}
-			s.Logf("starting %s", *tasks[0].TaskArn)
+			for _, task := range tasks {
+				s.Logf("starting %s", *task.TaskArn)
+			}
 		}
 	case "stoptask":
 		if req.Cluster == nil {
