@@ -87,11 +87,12 @@ func (cli *ECSClient) ListTasks(cluster string) ([]string, error) {
 	return output.TaskArns, nil
 }
 
-func (cli *ECSClient) RunTask(taskdefp *types.TaskDefinition, spot bool, count int32, name, cluster, subnet string, sgs, cmd []string) ([]types.Task, error) {
+func (cli *ECSClient) RunTask(taskdefp *types.TaskDefinition, spot bool, count int32, groupp *string, name, cluster, subnet string, sgs, cmd []string) ([]types.Task, error) {
 	input := &ecs.RunTaskInput{
 		TaskDefinition:       taskdefp.TaskDefinitionArn,
 		Cluster:              &cluster,
 		Count:                &count,
+		Group:                groupp,
 		EnableECSManagedTags: true,
 		EnableExecuteCommand: false,
 		NetworkConfiguration: &types.NetworkConfiguration{
