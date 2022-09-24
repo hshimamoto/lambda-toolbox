@@ -513,6 +513,8 @@ func (s *Session) doECSCommand(req PostRequest) {
 		for _, t := range tasks {
 			s.Logf("%s", *t.TaskArn)
 			s.Logf(" def: %s", *t.TaskDefinitionArn)
+			s.Logf(" status: %s", *t.LastStatus)
+			s.Logf(" group: %s", *t.Group)
 			for _, a := range t.Attachments {
 				for _, kv := range a.Details {
 					s.Logf("  %s: %s", *kv.Name, *kv.Value)
