@@ -490,7 +490,7 @@ func (s *Session) doECSCommand(req PostRequest) {
 			return
 		}
 		s.Logf("taskdef: %s", j)
-	case "tasks":
+	case "tasks", "tasksraw":
 		if req.Cluster == nil {
 			s.Logf("need cluster")
 			return
@@ -517,6 +517,14 @@ func (s *Session) doECSCommand(req PostRequest) {
 					s.Logf("  %s: %s", *kv.Name, *kv.Value)
 				}
 			}
+		}
+		if req.cmd == "tasksraw" {
+			raw, err := json.Marshal(tasks)
+			if err != nil {
+				s.Logf("Marshal: %v", err)
+				return
+			}
+			s.Logf("raw: %s", raw)
 		}
 	case "runtask":
 		var count int32 = 1
