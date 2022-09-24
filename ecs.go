@@ -87,14 +87,13 @@ func (cli *ECSClient) ListTasks(cluster string) ([]string, error) {
 	return output.TaskArns, nil
 }
 
-func (cli *ECSClient) RunTask(taskdefp *types.TaskDefinition, count int32, name, cluster, subnet string, sgs, cmd []string) ([]types.Task, error) {
+func (cli *ECSClient) RunTask(taskdefp *types.TaskDefinition, spot bool, count int32, name, cluster, subnet string, sgs, cmd []string) ([]types.Task, error) {
 	input := &ecs.RunTaskInput{
 		TaskDefinition:       taskdefp.TaskDefinitionArn,
 		Cluster:              &cluster,
 		Count:                &count,
 		EnableECSManagedTags: true,
 		EnableExecuteCommand: false,
-		LaunchType:           types.LaunchTypeFargate,
 		NetworkConfiguration: &types.NetworkConfiguration{
 			AwsvpcConfiguration: &types.AwsVpcConfiguration{
 				Subnets:        []string{subnet},
@@ -112,43 +111,13 @@ func (cli *ECSClient) RunTask(taskdefp *types.TaskDefinition, count int32, name,
 			TaskRoleArn: taskdefp.TaskRoleArn,
 		},
 	}
-	output, err := cli.client.RunTask(context.TODO(), input)
-	if err != nil {
-		return nil, err
-	}
-	return output.Tasks, nil
-}
-
-func (cli *ECSClient) RunTaskSpot(taskdefp *types.TaskDefinition, count int32, name, cluster, subnet string, sgs, cmd []string) ([]types.Task, error) {
-	fargate_spot := "FARGATE_SPOT"
-	input := &ecs.RunTaskInput{
-		TaskDefinition: taskdefp.TaskDefinitionArn,
-		CapacityProviderStrategy: []types.CapacityProviderStrategyItem{
-			types.CapacityProviderStrategyItem{
-				CapacityProvider: &fargate_spot,
-				Weight:           1,
-			},
-		},
-		Cluster:              &cluster,
-		Count:                &count,
-		EnableECSManagedTags: true,
-		EnableExecuteCommand: false,
-		NetworkConfiguration: &types.NetworkConfiguration{
-			AwsvpcConfiguration: &types.AwsVpcConfiguration{
-				Subnets:        []string{subnet},
-				AssignPublicIp: types.AssignPublicIpEnabled,
-				SecurityGroups: sgs,
-			},
-		},
-		Overrides: &types.TaskOverride{
-			ContainerOverrides: []types.ContainerOverride{
-				types.ContainerOverride{
-					Command: cmd,
-					Name:    &name,
-				},
-			},
-			TaskRoleArn: taskdefp.TaskRoleArn,
-		},
+	if spot {
+		fargate_spot := "FARGATE_SPOT"
+		cps := types.CapacityProviderStrategyItem{
+			CapacityProvider: &fargate_spot,
+			Weight:           1,
+		}
+		input.CapacityProviderStrategy = append(input.CapacityProviderStrategy, cps)
 	}
 	output, err := cli.client.RunTask(context.TODO(), input)
 	if err != nil {
