@@ -484,6 +484,12 @@ func (s *Session) doECSCommand(req PostRequest) {
 			return
 		}
 		s.Logf("%s:%d", *taskdefp.Family, taskdefp.Revision)
+		j, err := json.Marshal(taskdefp)
+		if err != nil {
+			s.Logf("Marshal: %v", err)
+			return
+		}
+		s.Logf("taskdef: %s", j)
 	case "tasks":
 		if req.Cluster == nil {
 			s.Logf("need cluster")
