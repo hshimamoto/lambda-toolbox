@@ -87,7 +87,7 @@ func (cli *ECSClient) ListTasks(cluster string) ([]string, error) {
 	return output.TaskArns, nil
 }
 
-func (cli *ECSClient) RunTask(taskdefp *types.TaskDefinition, spot bool, count int32, groupp *string, name, cluster, subnet string, sgs, cmd []string) ([]types.Task, error) {
+func (cli *ECSClient) RunTask(taskdefp *types.TaskDefinition, spot bool, count int32, groupp, taskrolep *string, name, cluster, subnet string, sgs, cmd []string) ([]types.Task, error) {
 	input := &ecs.RunTaskInput{
 		TaskDefinition:       taskdefp.TaskDefinitionArn,
 		Cluster:              &cluster,
@@ -120,6 +120,11 @@ func (cli *ECSClient) RunTask(taskdefp *types.TaskDefinition, spot bool, count i
 		}
 		input.CapacityProviderStrategy = append(input.CapacityProviderStrategy, cps)
 	}
+	if taskrolep != nil {
+		// enabling Exec
+		input.EnableExecuteCommand = true
+		input.Overrides.TaskRoleArn = taskrolep
+	}
 	output, err := cli.client.RunTask(context.TODO(), input)
 	if err != nil {
 		return nil, err
@@ -141,9 +146,9 @@ func (cli *ECSClient) StopTask(arn, cluster string) (*types.Task, error) {
 
 func (cli *ECSClient) ExecuteCommand(arn, cluster, cmd string) error {
 	input := &ecs.ExecuteCommandInput{
-		Command: &cmd,
-		Task: &arn,
-		Cluster: &cluster,
+		Command:     &cmd,
+		Task:        &arn,
+		Cluster:     &cluster,
 		Interactive: true,
 	}
 	_, err := cli.client.ExecuteCommand(context.TODO(), input)

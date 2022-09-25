@@ -58,6 +58,7 @@ type PostRequest struct {
 	Count             *int32            `json count,omitempty`
 	Cluster           *string           `json cluster,omitempty`
 	Group             *string           `json group,omitempty`
+	TaskRole          *string           `json taskrole,omitempty`
 	Nics              []string          `json nics,omitempty`
 	Requests          []PostRequest     `json requests,omitempty`
 	// parsed
@@ -572,7 +573,7 @@ func (s *Session) doECSCommand(req PostRequest) {
 			return
 		}
 		spot := len(req.args) > 0 && req.args[0] == "spot"
-		tasks, err := cli.RunTask(taskdefp, spot, count, req.Group, *req.Name, *req.Cluster, *req.SubnetId, req.SecurityGroupIds, req.ExecCommand)
+		tasks, err := cli.RunTask(taskdefp, spot, count, req.Group, req.TaskRole, *req.Name, *req.Cluster, *req.SubnetId, req.SecurityGroupIds, req.ExecCommand)
 		if err != nil {
 			s.Logf("RunTask: %v", err)
 			return
