@@ -601,6 +601,31 @@ func (s *Session) doECSCommand(req PostRequest) {
 			}
 			s.Logf("stopping %s", *task.TaskArn)
 		}
+	case "exec":
+		if req.Cluster == nil {
+			s.Logf("need cluster")
+			return
+		}
+		if req.ExecCommand == nil {
+			s.Logf("need execommand")
+			return
+		}
+		cmd := strings.Join(req.ExecCommand, " ")
+		arns := req.ARNs
+		if len(arns) == 0 {
+			if req.ARN == nil {
+				s.Logf("need arn")
+				return
+			}
+			arns = []string{*req.ARN}
+		}
+		for _, arn := range arns {
+			s.Logf("exec %s on %s", cmd, arn)
+			err := cli.ExecuteCommand(arn, *req.Cluster, cmd)
+			if err != nil {
+				s.Logf("ExecuteCommand: %v", err)
+			}
+		}
 	}
 }
 

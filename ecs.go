@@ -138,3 +138,14 @@ func (cli *ECSClient) StopTask(arn, cluster string) (*types.Task, error) {
 	}
 	return output.Task, nil
 }
+
+func (cli *ECSClient) ExecuteCommand(arn, cluster, cmd string) error {
+	input := &ecs.ExecuteCommandInput{
+		Command: &cmd,
+		Task: &arn,
+		Cluster: &cluster,
+		Interactive: true,
+	}
+	_, err := cli.client.ExecuteCommand(context.TODO(), input)
+	return err
+}
