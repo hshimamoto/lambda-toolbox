@@ -637,6 +637,26 @@ func (s *Session) doECSCommand(req PostRequest) {
 				s.Logf("ExecuteCommand: %v", err)
 			}
 		}
+	case "tag":
+		if req.Tags == nil {
+			s.Logf("need tags")
+			return
+		}
+		arns := req.ARNs
+		if len(arns) == 0 {
+			if req.ARN == nil {
+				s.Logf("need arn")
+				return
+			}
+			arns = []string{*req.ARN}
+		}
+		for _, arn := range arns {
+			s.Logf("tags %v on %s", req.Tags, arn)
+			err := cli.TagResource(arn, req.Tags)
+			if err != nil {
+				s.Logf("TagResource: %v", err)
+			}
+		}
 	}
 }
 
