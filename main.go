@@ -578,6 +578,16 @@ func (s *Session) doECSCommand(req PostRequest) {
 			s.Logf("RunTask: %v", err)
 			return
 		}
+		if req.Tags != nil {
+			s.Logf("TagResource: %v", req.Tags)
+			for _, task := range tasks {
+				arn := *task.TaskArn
+				err := cli.TagResource(arn, req.Tags)
+				if err != nil {
+					s.Logf("task:%s %v", arn, err)
+				}
+			}
+		}
 		for _, task := range tasks {
 			s.Logf("starting %s", *task.TaskArn)
 		}

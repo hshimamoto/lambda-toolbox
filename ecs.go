@@ -154,3 +154,24 @@ func (cli *ECSClient) ExecuteCommand(arn, cluster, cmd string) error {
 	_, err := cli.client.ExecuteCommand(context.TODO(), input)
 	return err
 }
+
+func (cli *ECSClient) TagResource(arn string, kvs map[string]string) error {
+	tag := func(key, val string) types.Tag {
+		tagKey := key
+		tagValue := val
+		return types.Tag{
+			Key:   &tagKey,
+			Value: &tagValue,
+		}
+	}
+	tags := []types.Tag{}
+	for k, v := range kvs {
+		tags = append(tags, tag(k, v))
+	}
+	input := &ecs.TagResourceInput{
+		ResourceArn: &arn,
+		Tags:        tags,
+	}
+	_, err := cli.client.TagResource(context.TODO(), input)
+	return err
+}
