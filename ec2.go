@@ -118,6 +118,14 @@ func (cli *EC2Client) DescribeNetworkInterfaces(nics []string) ([]types.NetworkI
 	input := &ec2.DescribeNetworkInterfacesInput{
 		NetworkInterfaceIds: nics,
 	}
+	if cli.VpcId != nil {
+		fname := "vpc-id"
+		filter := types.Filter{
+			Name:   &fname,
+			Values: []string{*cli.VpcId},
+		}
+		input.Filters = append(input.Filters, filter)
+	}
 	output, err := cli.client.DescribeNetworkInterfaces(context.TODO(), input)
 	if err != nil {
 		return nil, err

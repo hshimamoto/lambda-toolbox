@@ -281,6 +281,11 @@ func (s *Session) doEC2Command(req PostRequest) {
 			s.Logf("%s", EC2SecurityGroupString(sg))
 		}
 	case "nics":
+		cli.VpcId = nil
+		if req.VpcId != "" {
+			s.Logf("VpcId: %s", req.VpcId)
+			cli.VpcId = &req.VpcId
+		}
 		nics, err := cli.DescribeNetworkInterfaces(req.Nics)
 		if err != nil {
 			s.Logf("DescribeNetworkInterfaces: %v", err)
