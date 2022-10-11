@@ -64,6 +64,30 @@ func (cli *ECSClient) ListTaskDefinitions() ([]string, error) {
 	return output.TaskDefinitionArns, nil
 }
 
+func (cli *ECSClient) RegisterTaskDefinition(family, cpu, memory, execrole string) (*types.TaskDefinition, error) {
+	image := "ubuntu:latest"
+	name := "ubuntu"
+	input := &ecs.RegisterTaskDefinitionInput{
+		ContainerDefinitions: []types.ContainerDefinition{
+			types.ContainerDefinition{
+				Image: &image,
+				Name:  &name,
+			},
+		},
+		Cpu:                     &cpu,
+		ExecutionRoleArn:        &execrole,
+		Family:                  &family,
+		Memory:                  &memory,
+		NetworkMode:             "awsvpc",
+		RequiresCompatibilities: []types.Compatibility{"FARGATE"},
+	}
+	output, err := cli.client.RegisterTaskDefinition(context.TODO(), input)
+	if err != nil {
+		return nil, err
+	}
+	return output.TaskDefinition, nil
+}
+
 func (cli *ECSClient) DescribeTasks(arns []string, cluster string) ([]types.Task, error) {
 	input := &ecs.DescribeTasksInput{
 		Tasks:   arns,

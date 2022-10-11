@@ -59,6 +59,10 @@ type PostRequest struct {
 	Cluster           *string           `json cluster,omitempty`
 	Group             *string           `json group,omitempty`
 	TaskRole          *string           `json taskrole,omitempty`
+	Family            *string           `json family,omitempty`
+	ExecRole          *string           `json execrole,omitempty`
+	Cpu               *string           `json cpu,omitempty`
+	Memory            *string           `json memory,omitempty`
 	Nics              []string          `json nics,omitempty`
 	Requests          []PostRequest     `json requests,omitempty`
 	// parsed
@@ -497,6 +501,29 @@ func (s *Session) doECSCommand(req PostRequest) {
 			return
 		}
 		s.Logf("taskdef: %s", j)
+	case "regtaskdef":
+		if req.Family == nil {
+			s.Logf("need family")
+			return
+		}
+		if req.ExecRole == nil {
+			s.Logf("need execrole")
+			return
+		}
+		if req.Cpu == nil {
+			s.Logf("need cpu")
+			return
+		}
+		if req.Memory == nil {
+			s.Logf("need memory")
+			return
+		}
+		taskdef, err := cli.RegisterTaskDefinition(*req.Family, *req.Cpu, *req.Memory, *req.ExecRole)
+		if err != nil {
+			s.Logf("RegisterTaskDefinition: %v", err)
+			return
+		}
+		s.Logf("%+v", taskdef)
 	case "tasks", "tasksraw":
 		if req.Cluster == nil {
 			s.Logf("need cluster")
