@@ -481,11 +481,17 @@ func (s *Session) doECSCommand(req PostRequest) {
 			s.Logf("%s", arn)
 		}
 	case "taskdef":
-		if req.ARN == nil {
-			s.Logf("need arn")
-			return
+		family := req.Family
+		if family == nil {
+			// old compatibility
+			if req.ARN == nil {
+				s.Logf("need family or arn")
+				return
+			}
+			s.Logf("please use family")
+			family = req.ARN
 		}
-		taskdefp, err := cli.DescribeTaskDefinition(*req.ARN)
+		taskdefp, err := cli.DescribeTaskDefinition(*family)
 		if err != nil {
 			s.Logf("DescribeTaskDefinition: %v", err)
 			return
