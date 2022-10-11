@@ -64,6 +64,17 @@ func (cli *ECSClient) ListTaskDefinitions() ([]string, error) {
 	return output.TaskDefinitionArns, nil
 }
 
+func (cli *ECSClient) DeregisterTaskDefinition(family string) (*types.TaskDefinition, error) {
+	input := &ecs.DeregisterTaskDefinitionInput{
+		TaskDefinition: &family,
+	}
+	output, err := cli.client.DeregisterTaskDefinition(context.TODO(), input)
+	if err != nil {
+		return nil, err
+	}
+	return output.TaskDefinition, nil
+}
+
 func (cli *ECSClient) RegisterTaskDefinition(family, cpu, memory, execrole string) (*types.TaskDefinition, error) {
 	image := "ubuntu:latest"
 	name := "ubuntu"

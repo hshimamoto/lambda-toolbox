@@ -524,6 +524,17 @@ func (s *Session) doECSCommand(req PostRequest) {
 			return
 		}
 		s.Logf("%+v", taskdef)
+	case "deregtaskdef":
+		if req.Family == nil {
+			s.Logf("need family")
+			return
+		}
+		taskdef, err := cli.DeregisterTaskDefinition(*req.Family)
+		if err != nil {
+			s.Logf("DeregisterTaskDefinition: %v", err)
+			return
+		}
+		s.Logf("%+v", taskdef)
 	case "tasks", "tasksraw":
 		if req.Cluster == nil {
 			s.Logf("need cluster")
