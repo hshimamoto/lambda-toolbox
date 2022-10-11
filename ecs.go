@@ -122,7 +122,7 @@ func (cli *ECSClient) ListTasks(cluster string) ([]string, error) {
 	return output.TaskArns, nil
 }
 
-func (cli *ECSClient) RunTask(taskdefp *types.TaskDefinition, spot bool, count int32, groupp, taskrolep *string, name, cluster, subnet string, sgs, cmd []string) ([]types.Task, error) {
+func (cli *ECSClient) RunTask(taskdefp *types.TaskDefinition, spot bool, count int32, groupp, taskrolep, cpup, memp *string, name, cluster, subnet string, sgs, cmd []string) ([]types.Task, error) {
 	input := &ecs.RunTaskInput{
 		TaskDefinition:       taskdefp.TaskDefinitionArn,
 		Cluster:              &cluster,
@@ -145,6 +145,8 @@ func (cli *ECSClient) RunTask(taskdefp *types.TaskDefinition, spot bool, count i
 				},
 			},
 			TaskRoleArn: taskdefp.TaskRoleArn,
+			Cpu:         cpup,
+			Memory:      memp,
 		},
 	}
 	if spot {
