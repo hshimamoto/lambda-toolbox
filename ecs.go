@@ -75,14 +75,12 @@ func (cli *ECSClient) DeregisterTaskDefinition(family string) (*types.TaskDefini
 	return output.TaskDefinition, nil
 }
 
-func (cli *ECSClient) RegisterTaskDefinition(family, cpu, memory, execrole string) (*types.TaskDefinition, error) {
-	image := "ubuntu:latest"
-	name := "ubuntu"
+func (cli *ECSClient) RegisterTaskDefinition(family, cpu, memory, execrole, cname, cimage string) (*types.TaskDefinition, error) {
 	input := &ecs.RegisterTaskDefinitionInput{
 		ContainerDefinitions: []types.ContainerDefinition{
 			types.ContainerDefinition{
-				Image: &image,
-				Name:  &name,
+				Image: &cimage,
+				Name:  &cname,
 			},
 		},
 		Cpu:                     &cpu,

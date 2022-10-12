@@ -63,6 +63,7 @@ type PostRequest struct {
 	ExecRole          *string           `json execrole,omitempty`
 	Cpu               *string           `json cpu,omitempty`
 	Memory            *string           `json memory,omitempty`
+	Image             *string           `json image,omitempty`
 	Nics              []string          `json nics,omitempty`
 	Requests          []PostRequest     `json requests,omitempty`
 	// parsed
@@ -524,7 +525,15 @@ func (s *Session) doECSCommand(req PostRequest) {
 			s.Logf("need memory")
 			return
 		}
-		taskdef, err := cli.RegisterTaskDefinition(*req.Family, *req.Cpu, *req.Memory, *req.ExecRole)
+		cname := "ubuntu"
+		if req.Name != nil {
+			cname = *req.Name
+		}
+		cimage := "ubuntu:latest"
+		if req.Image != nil {
+			cimage = *req.Image
+		}
+		taskdef, err := cli.RegisterTaskDefinition(*req.Family, *req.Cpu, *req.Memory, *req.ExecRole, cname, cimage)
 		if err != nil {
 			s.Logf("RegisterTaskDefinition: %v", err)
 			return
