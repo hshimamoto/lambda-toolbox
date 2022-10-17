@@ -260,6 +260,11 @@ func (cli *EC2Client) RunInstances(count int32, ec2spec *EC2InstanceSpec) ([]typ
 		NetworkInterfaces:   netspecs,
 		UserData:            ec2spec.UserData,
 	}
+	if ec2spec.ProfileArn != nil {
+		input.IamInstanceProfile = &types.IamInstanceProfileSpecification{
+			Arn: ec2spec.ProfileArn,
+		}
+	}
 	output, err := cli.client.RunInstances(context.TODO(), input)
 	if err != nil {
 		return nil, err

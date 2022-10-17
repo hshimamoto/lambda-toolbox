@@ -52,6 +52,7 @@ type PostRequest struct {
 	Name              *string           `json name,omitempty`
 	Tags              map[string]string `json tags,omitempty`
 	VolumeSize        *int32            `json volumesize,omitempty`
+	ProfileArn        *string           `json profilearn,omitempty`
 	ExecCommand       []string          `json execcommand,omitempty`
 	Arch              *string           `json arch,omitempty`
 	Distro            *string           `json distro,omitempty`
@@ -105,6 +106,7 @@ type EC2InstanceSpec struct {
 	SubnetId          *string
 	AssociatePublicIp *bool
 	VolumeSize        int32
+	ProfileArn        *string
 	Tags              map[string]string
 }
 
@@ -154,6 +156,7 @@ func (s *Session) newEC2InstanceSpec(req PostRequest) (*EC2InstanceSpec, error) 
 		AssociatePublicIp: req.AssociatePublicIp,
 		Tags:              tags,
 		VolumeSize:        volumesize,
+		ProfileArn:        req.ProfileArn,
 	}, nil
 }
 
