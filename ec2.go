@@ -155,6 +155,11 @@ func (cli *EC2Client) RequestSpotInstances(count int32, ec2spec *EC2InstanceSpec
 		NetworkInterfaces:   netspecs,
 		UserData:            ec2spec.UserData,
 	}
+	if ec2spec.ProfileArn != nil {
+		spec.IamInstanceProfile = &types.IamInstanceProfileSpecification{
+			Arn: ec2spec.ProfileArn,
+		}
+	}
 	tag := func(key, val string) types.Tag {
 		tagKey := key
 		tagValue := val
