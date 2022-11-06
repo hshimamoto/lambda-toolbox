@@ -32,7 +32,11 @@ func EC2InstanceName(i types.Instance) string {
 
 func EC2InstanceString(i types.Instance) string {
 	name := ""
+	privip := ""
 	pubip := ""
+	if i.PrivateIpAddress != nil {
+		privip = *i.PrivateIpAddress
+	}
 	if i.PublicIpAddress != nil {
 		pubip = *i.PublicIpAddress
 	}
@@ -47,8 +51,8 @@ func EC2InstanceString(i types.Instance) string {
 	sort.Slice(keyval, func(a, b int) bool {
 		return keyval[a] < keyval[b]
 	})
-	return fmt.Sprintf("%s:%s:%s:%s:%s:%v",
-		*i.InstanceId, name, i.InstanceType, i.State.Name, pubip, keyval)
+	return fmt.Sprintf("%s:%s:%s:%s:%s:%s:%v",
+		*i.InstanceId, name, i.InstanceType, i.State.Name, privip, pubip, keyval)
 }
 
 func EC2VpcString(v types.Vpc) string {
