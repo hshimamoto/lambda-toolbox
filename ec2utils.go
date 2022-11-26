@@ -225,6 +225,15 @@ func (cli *EC2Client) GetImage(distro, arch string) (types.Image, error) {
 	case "ubuntu22":
 		name = "ubuntu/*-22.04-*"
 		owner = "099720109477"
+	case "centos7":
+		name = "CentOS Linux 7*"
+		owner = "125523088429"
+	case "centos8":
+		name = "CentOS Stream 8*"
+		owner = "125523088429"
+	case "centos9":
+		name = "CentOS Stream 9*"
+		owner = "125523088429"
 	}
 	if name == "" || owner == "" {
 		return types.Image{}, fmt.Errorf("no name or owner")
