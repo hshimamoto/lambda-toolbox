@@ -67,6 +67,7 @@ type PostRequest struct {
 	Image             *string           `json image,omitempty`
 	Nics              []string          `json nics,omitempty`
 	Requests          []PostRequest     `json requests,omitempty`
+	Force             *bool             `json force,omitempty`
 	// parsed
 	cmd  string
 	args []string
@@ -370,7 +371,7 @@ func (s *Session) doEC2Command(req PostRequest) {
 			s.Logf("no instance ids")
 			return
 		}
-		instances, err := cli.StopInstances(ids)
+		instances, err := cli.StopInstances(ids, req.Force)
 		if err != nil {
 			s.Logf("StopInstances: %v", err)
 			return

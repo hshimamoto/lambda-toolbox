@@ -228,9 +228,10 @@ func (cli *EC2Client) StartInstances(ids []string) ([]types.InstanceStateChange,
 	return output.StartingInstances, nil
 }
 
-func (cli *EC2Client) StopInstances(ids []string) ([]types.InstanceStateChange, error) {
+func (cli *EC2Client) StopInstances(ids []string, force *bool) ([]types.InstanceStateChange, error) {
 	input := &ec2.StopInstancesInput{
 		InstanceIds: ids,
+		Force:       force,
 	}
 	output, err := cli.client.StopInstances(context.TODO(), input)
 	if err != nil {
