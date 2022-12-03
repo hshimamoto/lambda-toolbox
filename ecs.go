@@ -126,6 +126,7 @@ func (cli *ECSClient) RunTask(taskdefp *types.TaskDefinition, spot bool, count i
 		Cluster:              &cluster,
 		Count:                &count,
 		Group:                groupp,
+		LaunchType:           types.LaunchTypeFargate,
 		EnableECSManagedTags: true,
 		EnableExecuteCommand: false,
 		NetworkConfiguration: &types.NetworkConfiguration{
