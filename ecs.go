@@ -126,7 +126,6 @@ func (cli *ECSClient) RunTask(taskdefp *types.TaskDefinition, spot bool, count i
 		Cluster:              &cluster,
 		Count:                &count,
 		Group:                groupp,
-		LaunchType:           types.LaunchTypeFargate,
 		EnableECSManagedTags: true,
 		EnableExecuteCommand: false,
 		NetworkConfiguration: &types.NetworkConfiguration{
@@ -154,6 +153,8 @@ func (cli *ECSClient) RunTask(taskdefp *types.TaskDefinition, spot bool, count i
 			Weight:           1,
 		}
 		input.CapacityProviderStrategy = append(input.CapacityProviderStrategy, cps)
+	} else {
+		input.LaunchType = types.LaunchTypeFargate
 	}
 	if pubip {
 		input.NetworkConfiguration.AwsvpcConfiguration.AssignPublicIp = types.AssignPublicIpEnabled
