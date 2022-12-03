@@ -634,8 +634,12 @@ func (s *Session) doECSCommand(req PostRequest) {
 			s.Logf("TaskDefinition nil\n")
 			return
 		}
+		pubip := true
+		if req.AssociatePublicIp != nil {
+			pubip = *req.AssociatePublicIp
+		}
 		spot := len(req.args) > 0 && req.args[0] == "spot"
-		tasks, err := cli.RunTask(taskdefp, spot, count, req.Group, req.TaskRole, req.Cpu, req.Memory, *req.Name, *req.Cluster, *req.SubnetId, req.SecurityGroupIds, req.ExecCommand)
+		tasks, err := cli.RunTask(taskdefp, spot, count, req.Group, req.TaskRole, req.Cpu, req.Memory, *req.Name, *req.Cluster, *req.SubnetId, pubip, req.SecurityGroupIds, req.ExecCommand)
 		if err != nil {
 			s.Logf("RunTask: %v", err)
 			return

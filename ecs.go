@@ -120,7 +120,7 @@ func (cli *ECSClient) ListTasks(cluster string) ([]string, error) {
 	return output.TaskArns, nil
 }
 
-func (cli *ECSClient) RunTask(taskdefp *types.TaskDefinition, spot bool, count int32, groupp, taskrolep, cpup, memp *string, name, cluster, subnet string, sgs, cmd []string) ([]types.Task, error) {
+func (cli *ECSClient) RunTask(taskdefp *types.TaskDefinition, spot bool, count int32, groupp, taskrolep, cpup, memp *string, name, cluster, subnet string, pubip bool, sgs, cmd []string) ([]types.Task, error) {
 	input := &ecs.RunTaskInput{
 		TaskDefinition:       taskdefp.TaskDefinitionArn,
 		Cluster:              &cluster,
@@ -131,7 +131,6 @@ func (cli *ECSClient) RunTask(taskdefp *types.TaskDefinition, spot bool, count i
 		NetworkConfiguration: &types.NetworkConfiguration{
 			AwsvpcConfiguration: &types.AwsVpcConfiguration{
 				Subnets:        []string{subnet},
-				AssignPublicIp: types.AssignPublicIpEnabled,
 				SecurityGroups: sgs,
 			},
 		},
@@ -154,6 +153,9 @@ func (cli *ECSClient) RunTask(taskdefp *types.TaskDefinition, spot bool, count i
 			Weight:           1,
 		}
 		input.CapacityProviderStrategy = append(input.CapacityProviderStrategy, cps)
+	}
+	if pubip {
+		input.NetworkConfiguration.AwsvpcConfiguration.AssignPublicIp = types.AssignPublicIpEnabled
 	}
 	if taskrolep != nil {
 		// enabling Exec
