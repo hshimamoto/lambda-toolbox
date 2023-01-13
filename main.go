@@ -17,6 +17,7 @@ import (
 type Session struct {
 	Outputs []string
 	Bucket  *Bucket
+	Verbose bool
 }
 
 func NewSession() *Session {
@@ -28,6 +29,10 @@ func NewSession() *Session {
 		// ignore error at this point
 	}
 	s.Bucket = b
+	verbose := os.Getenv("VERBOSE")
+	if verbose == "yes" || verbose == "true" {
+		s.Verbose = true
+	}
 	return s
 }
 
@@ -75,7 +80,9 @@ type PostRequest struct {
 
 func (s *Session) Logf(f string, args ...interface{}) {
 	out := fmt.Sprintf(f, args...)
-	fmt.Printf("%s\n", out)
+	if s.Verbose {
+		fmt.Printf("%s\n", out)
+	}
 	s.Outputs = append(s.Outputs, out)
 }
 
