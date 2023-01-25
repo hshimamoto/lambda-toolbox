@@ -252,6 +252,17 @@ func (s *Session) doEC2RequestSpotInstances(cli *EC2Client, req PostRequest) {
 	}
 }
 
+func parseInstanceIds(req PostRequest) ([]string, error) {
+	ids := req.InstanceIds
+	if req.InstanceId != nil {
+		ids = append(ids, *req.InstanceId)
+	}
+	if len(ids) == 0 {
+		return nil, fmt.Errorf("no instance ids")
+	}
+	return ids, nil
+}
+
 func (s *Session) doEC2Command(req PostRequest) {
 	cli, err := NewEC2Client()
 	if err != nil {
@@ -353,12 +364,9 @@ func (s *Session) doEC2Command(req PostRequest) {
 	case "run":
 		s.doEC2RunInstances(cli, req)
 	case "start":
-		ids := req.InstanceIds
-		if req.InstanceId != nil {
-			ids = append(ids, *req.InstanceId)
-		}
-		if len(ids) == 0 {
-			s.Logf("no instance ids")
+		ids, err := parseInstanceIds(req)
+		if err != nil {
+			s.Logf("start: %s", err)
 			return
 		}
 		instances, err := cli.StartInstances(ids)
@@ -370,12 +378,9 @@ func (s *Session) doEC2Command(req PostRequest) {
 			s.Logf("%s", EC2StateChangeString(i))
 		}
 	case "stop":
-		ids := req.InstanceIds
-		if req.InstanceId != nil {
-			ids = append(ids, *req.InstanceId)
-		}
-		if len(ids) == 0 {
-			s.Logf("no instance ids")
+		ids, err := parseInstanceIds(req)
+		if err != nil {
+			s.Logf("stop: %s", err)
 			return
 		}
 		instances, err := cli.StopInstances(ids, req.Force)
@@ -387,12 +392,9 @@ func (s *Session) doEC2Command(req PostRequest) {
 			s.Logf("%s", EC2StateChangeString(i))
 		}
 	case "terminate":
-		ids := req.InstanceIds
-		if req.InstanceId != nil {
-			ids = append(ids, *req.InstanceId)
-		}
-		if len(ids) == 0 {
-			s.Logf("no instance ids")
+		ids, err := parseInstanceIds(req)
+		if err != nil {
+			s.Logf("terminate: %s", err)
 			return
 		}
 		instances, err := cli.TerminateInstances(ids)
