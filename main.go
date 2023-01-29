@@ -12,6 +12,8 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 )
 
 type Session struct {
@@ -263,6 +265,12 @@ func parseInstanceIds(req PostRequest) ([]string, error) {
 	return ids, nil
 }
 
+func (s *Session) showInstancesState(instances []ec2types.InstanceStateChange) {
+	for _, i := range instances {
+		s.Logf("%s", EC2StateChangeString(i))
+	}
+}
+
 func (s *Session) doEC2Command(req PostRequest) {
 	cli, err := NewEC2Client()
 	if err != nil {
@@ -374,9 +382,7 @@ func (s *Session) doEC2Command(req PostRequest) {
 			s.Logf("StartInstances: %v", err)
 			return
 		}
-		for _, i := range instances {
-			s.Logf("%s", EC2StateChangeString(i))
-		}
+		s.showInstancesState(instances)
 	case "stop":
 		ids, err := parseInstanceIds(req)
 		if err != nil {
@@ -388,9 +394,7 @@ func (s *Session) doEC2Command(req PostRequest) {
 			s.Logf("StopInstances: %v", err)
 			return
 		}
-		for _, i := range instances {
-			s.Logf("%s", EC2StateChangeString(i))
-		}
+		s.showInstancesState(instances)
 	case "terminate":
 		ids, err := parseInstanceIds(req)
 		if err != nil {
@@ -402,9 +406,7 @@ func (s *Session) doEC2Command(req PostRequest) {
 			s.Logf("TerminateInstances: %v", err)
 			return
 		}
-		for _, i := range instances {
-			s.Logf("%s", EC2StateChangeString(i))
-		}
+		s.showInstancesState(instances)
 	case "rename":
 		if req.InstanceId == nil {
 			s.Logf("no instanceid")
