@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net"
 	"os"
 	"strings"
 	"time"
@@ -1001,6 +1002,17 @@ func (s *Session) handle(req events.LambdaFunctionURLRequest) {
 	deny := true
 	for _, ip := range strings.Split(allowed, ",") {
 		if sourceip == strings.TrimSpace(ip) {
+			deny = false
+			break
+		}
+	}
+	allowed_hosts := os.Getenv("ALLOWED_HOSTS")
+	for _, host := range strings.Split(allowed_hosts, ",") {
+		addr, err := net.ResolveIPAddr("ip4", host)
+		if err != nil {
+			continue
+		}
+		if sourceip == addr.String() {
 			deny = false
 			break
 		}
