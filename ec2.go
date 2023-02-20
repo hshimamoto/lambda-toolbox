@@ -142,6 +142,30 @@ func (cli *EC2Client) DescribeVolumes() ([]types.Volume, error) {
 	return output.Volumes, nil
 }
 
+func (cli *EC2Client) AttachVolume(volumeId, instanceId, device string) error {
+	input := &ec2.AttachVolumeInput{
+		Device:     &device,
+		InstanceId: &instanceId,
+		VolumeId:   &volumeId,
+	}
+	_, err := cli.client.AttachVolume(context.TODO(), input)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (cli *EC2Client) DetachVolume(volumeId string) error {
+	input := &ec2.DetachVolumeInput{
+		VolumeId: &volumeId,
+	}
+	_, err := cli.client.DetachVolume(context.TODO(), input)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (cli *EC2Client) RequestSpotInstances(count int32, ec2spec *EC2InstanceSpec) ([]types.SpotInstanceRequest, error) {
 	netspecs, securitygroupids := getNetworkInterfaceSpecification(ec2spec)
 	ebsoptimized := true

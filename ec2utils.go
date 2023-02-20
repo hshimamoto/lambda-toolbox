@@ -176,6 +176,7 @@ func EC2VolumeString(vol types.Volume) string {
 	sort.Slice(keyval, func(a, b int) bool {
 		return keyval[a] < keyval[b]
 	})
+	state := vol.State
 	attach := ""
 	for _, att := range vol.Attachments {
 		attach = *att.InstanceId
@@ -184,9 +185,9 @@ func EC2VolumeString(vol types.Volume) string {
 	if vol.Size != nil {
 		size = *vol.Size
 	}
-	return fmt.Sprintf("%s:%s:%d:%s:%v",
+	return fmt.Sprintf("%s:%s:%d:%s:%s:%v",
 		*vol.VolumeId, vol.VolumeType, size,
-		attach, keyval)
+		state, attach, keyval)
 }
 
 func EC2ImageString(i types.Image) string {

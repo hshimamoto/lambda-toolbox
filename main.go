@@ -56,6 +56,7 @@ type PostRequest struct {
 	InstanceType      string            `json instancetype,omitempty`
 	KeyName           *string           `json keyname,omitempty`
 	SecurityGroupIds  []string          `json securitygroupids,omitempty`
+	VolumeId          *string           `json volumeid,omitempty`
 	UserDataFile      *string           `json userdatafile,omitempty`
 	Name              *string           `json name,omitempty`
 	Tags              map[string]string `json tags,omitempty`
@@ -434,6 +435,33 @@ func (s *Session) doEC2Command(req PostRequest) {
 		}
 		cli.SetTags(instances[0], rename)
 		s.Logf("%s: rename %s to %s", *instances[0].InstanceId, prevname, *req.Name)
+	case "attachvolume":
+		if req.VolumeId == nil {
+			s.Logf("no volumeid")
+			return
+		}
+		if req.InstanceId == nil {
+			s.Logf("no instanceid")
+			return
+		}
+		volumeId := *req.VolumeId
+		instanceId := *req.InstanceId
+		err := cli.AttachVolume(volumeId, instanceId, "/dev/sdf")
+		if err != nil {
+			s.Logf("AttachVolume: %v", err)
+			return
+		}
+	case "detachvolume":
+		if req.VolumeId == nil {
+			s.Logf("no volumeid")
+			return
+		}
+		volumeId := *req.VolumeId
+		err := cli.DetachVolume(volumeId)
+		if err != nil {
+			s.Logf("DetachVolume: %v", err)
+			return
+		}
 	case "change":
 		if len(req.args) == 0 {
 			s.Logf("need change attributename")
