@@ -155,6 +155,17 @@ func (cli *EC2Client) CreateVolume(az string, sz int32) (string, error) {
 	return *output.VolumeId, nil
 }
 
+func (cli *EC2Client) DeleteVolume(volumeid string) error {
+	input := &ec2.DeleteVolumeInput{
+		VolumeId: &volumeid,
+	}
+	_, err := cli.client.DeleteVolume(context.TODO(), input)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (cli *EC2Client) AttachVolume(volumeId, instanceId, device string) error {
 	input := &ec2.AttachVolumeInput{
 		Device:     &device,

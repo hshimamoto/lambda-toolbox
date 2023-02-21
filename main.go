@@ -455,6 +455,17 @@ func (s *Session) doEC2Command(req PostRequest) {
 			cli.CreateTags(volumeid, map[string]string{"Name": *req.Name})
 		}
 		return
+	case "deletevolume":
+		if req.VolumeId == nil {
+			s.Logf("no volumeid")
+			return
+		}
+		err := cli.DeleteVolume(*req.VolumeId)
+		if err != nil {
+			s.Logf("DeleteVolume: %v", err)
+			return
+		}
+		return
 	case "attachvolume":
 		if req.VolumeId == nil {
 			s.Logf("no volumeid")
