@@ -142,6 +142,19 @@ func (cli *EC2Client) DescribeVolumes() ([]types.Volume, error) {
 	return output.Volumes, nil
 }
 
+func (cli *EC2Client) CreateVolume(az string, sz int32) (string, error) {
+	input := &ec2.CreateVolumeInput{
+		AvailabilityZone: &az,
+		Size:             &sz,
+		VolumeType:       "gp3",
+	}
+	output, err := cli.client.CreateVolume(context.TODO(), input)
+	if err != nil {
+		return "", err
+	}
+	return *output.VolumeId, nil
+}
+
 func (cli *EC2Client) AttachVolume(volumeId, instanceId, device string) error {
 	input := &ec2.AttachVolumeInput{
 		Device:     &device,

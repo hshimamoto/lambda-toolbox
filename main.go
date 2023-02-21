@@ -56,6 +56,7 @@ type PostRequest struct {
 	InstanceType      string            `json instancetype,omitempty`
 	KeyName           *string           `json keyname,omitempty`
 	SecurityGroupIds  []string          `json securitygroupids,omitempty`
+	AvailabilityZone  *string           `json az,omitempty`
 	VolumeId          *string           `json volumeid,omitempty`
 	UserDataFile      *string           `json userdatafile,omitempty`
 	Name              *string           `json name,omitempty`
@@ -435,6 +436,25 @@ func (s *Session) doEC2Command(req PostRequest) {
 		}
 		cli.SetTags(instances[0], rename)
 		s.Logf("%s: rename %s to %s", *instances[0].InstanceId, prevname, *req.Name)
+	case "createvolume":
+		if req.AvailabilityZone == nil {
+			s.Logf("no az")
+			return
+		}
+		if req.VolumeSize == nil {
+			s.Logf("no size")
+			return
+		}
+		volumeid, err := cli.CreateVolume(*req.AvailabilityZone, *req.VolumeSize)
+		if err != nil {
+			s.Logf("CreateVolume: %v", err)
+			return
+		}
+		s.Logf("Volume %s has been created", volumeid)
+		if req.Name != nil {
+			cli.CreateTags(volumeid, map[string]string{"Name": *req.Name})
+		}
+		return
 	case "attachvolume":
 		if req.VolumeId == nil {
 			s.Logf("no volumeid")
