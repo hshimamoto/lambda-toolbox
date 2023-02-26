@@ -168,7 +168,7 @@ func EC2NetworkInterfaceString(nic types.NetworkInterface) string {
 }
 
 func EC2VolumeString(vol types.Volume) string {
-	tags, _ := EC2GetTagsAndName(vol.Tags)
+	tags, namep := EC2GetTagsAndName(vol.Tags)
 	keyval := []string{}
 	for k, v := range tags {
 		keyval = append(keyval, fmt.Sprintf("%s:%s", k, v))
@@ -176,6 +176,10 @@ func EC2VolumeString(vol types.Volume) string {
 	sort.Slice(keyval, func(a, b int) bool {
 		return keyval[a] < keyval[b]
 	})
+	name := ""
+	if namep != nil {
+		name = *namep
+	}
 	state := vol.State
 	attach := ""
 	for _, att := range vol.Attachments {
@@ -185,8 +189,8 @@ func EC2VolumeString(vol types.Volume) string {
 	if vol.Size != nil {
 		size = *vol.Size
 	}
-	return fmt.Sprintf("%s:%s:%d:%s:%s:%v",
-		*vol.VolumeId, vol.VolumeType, size,
+	return fmt.Sprintf("%s:%s:%s:%d:%s:%s:%v",
+		*vol.VolumeId, name, vol.VolumeType, size,
 		state, attach, keyval)
 }
 
