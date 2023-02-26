@@ -189,9 +189,9 @@ func EC2VolumeString(vol types.Volume) string {
 	if vol.Size != nil {
 		size = *vol.Size
 	}
-	return fmt.Sprintf("%s:%s:%s:%d:%s:%s:%v",
+	return fmt.Sprintf("%s:%s:%s:%d:%s:%s:%s:%v",
 		*vol.VolumeId, name, vol.VolumeType, size,
-		state, attach, keyval)
+		state, attach, *vol.AvailabilityZone, keyval)
 }
 
 func EC2ImageString(i types.Image) string {
