@@ -58,6 +58,7 @@ type PostRequest struct {
 	SecurityGroupIds  []string          `json securitygroupids,omitempty`
 	AvailabilityZone  *string           `json az,omitempty`
 	VolumeId          *string           `json volumeid,omitempty`
+	Device            *string           `json device,omitempty`
 	UserDataFile      *string           `json userdatafile,omitempty`
 	Name              *string           `json name,omitempty`
 	Tags              map[string]string `json tags,omitempty`
@@ -477,7 +478,11 @@ func (s *Session) doEC2Command(req PostRequest) {
 		}
 		volumeId := *req.VolumeId
 		instanceId := *req.InstanceId
-		err := cli.AttachVolume(volumeId, instanceId, "/dev/sdf")
+		device := "/dev/sdf"
+		if req.Device != nil {
+			device = *req.Device
+		}
+		err := cli.AttachVolume(volumeId, instanceId, device)
 		if err != nil {
 			s.Logf("AttachVolume: %v", err)
 			return
