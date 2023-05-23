@@ -195,8 +195,12 @@ func EC2VolumeString(vol types.Volume) string {
 }
 
 func EC2ImageString(i types.Image) string {
+	desc := ""
+	if i.Description != nil {
+		desc = *i.Description
+	}
 	return fmt.Sprintf("%s:%s:%s",
-		*i.ImageId, *i.Name, *i.Description)
+		*i.ImageId, *i.Name, desc)
 }
 
 func EC2StateChangeString(i types.InstanceStateChange) string {
@@ -217,7 +221,24 @@ func EC2BlockDeviceMappings(volsz int32, voltype string) []types.BlockDeviceMapp
 	}
 }
 
-func (cli *EC2Client) GetImage(distro, arch string) (types.Image, error) {
+func (cli *EC2Client) GetImage(name, owner, arch string) (types.Image, error) {
+	if name == "" || owner == "" || arch == "" {
+		return types.Image{}, fmt.Errorf("no name, owner nor arch")
+	}
+	images, err := cli.DescribeImages(owner, arch, name)
+	if err != nil {
+		return types.Image{}, err
+	}
+	if len(images) == 0 {
+		return types.Image{}, fmt.Errorf("no images")
+	}
+	sort.Slice(images, func(a, b int) bool {
+		return *images[a].CreationDate > *images[b].CreationDate
+	})
+	return images[0], nil
+}
+
+func (cli *EC2Client) GetDistroImage(distro, arch string) (types.Image, error) {
 	name := ""
 	owner := ""
 	switch distro {
@@ -240,20 +261,7 @@ func (cli *EC2Client) GetImage(distro, arch string) (types.Image, error) {
 		name = "CentOS Stream 9*"
 		owner = "125523088429"
 	}
-	if name == "" || owner == "" {
-		return types.Image{}, fmt.Errorf("no name or owner")
-	}
-	images, err := cli.DescribeImages(owner, arch, name)
-	if err != nil {
-		return types.Image{}, err
-	}
-	if len(images) == 0 {
-		return types.Image{}, fmt.Errorf("no images")
-	}
-	sort.Slice(images, func(a, b int) bool {
-		return *images[a].CreationDate > *images[b].CreationDate
-	})
-	return images[0], nil
+	return cli.GetImage(name, owner, arch)
 }
 
 func (cli *EC2Client) SetTags(i types.Instance, tags map[string]string) []error {

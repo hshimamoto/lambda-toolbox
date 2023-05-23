@@ -61,6 +61,7 @@ type PostRequest struct {
 	Device            *string           `json device,omitempty`
 	UserDataFile      *string           `json userdatafile,omitempty`
 	Name              *string           `json name,omitempty`
+	Owner             *string           `json owner,omitempty`
 	Tags              map[string]string `json tags,omitempty`
 	VolumeSize        *int32            `json volumesize,omitempty`
 	ProfileArn        *string           `json profilearn,omitempty`
@@ -343,15 +344,21 @@ func (s *Session) doEC2Command(req PostRequest) {
 			s.Logf("%s", EC2VolumeString(vol))
 		}
 	case "images":
-		distro := "amazon"
 		arch := "x86_64"
-		if req.Distro != nil {
-			distro = *req.Distro
-		}
 		if req.Arch != nil {
 			arch = *req.Arch
 		}
-		image, err := cli.GetImage(distro, arch)
+		var image ec2types.Image
+		var err error
+		if req.Name != nil && req.Owner != nil {
+			image, err = cli.GetImage(*req.Name, *req.Owner, arch)
+		} else {
+			distro := "amazon"
+			if req.Distro != nil {
+				distro = *req.Distro
+			}
+			image, err = cli.GetDistroImage(distro, arch)
+		}
 		if err != nil {
 			s.Logf("GetImage: %v", err)
 			return
