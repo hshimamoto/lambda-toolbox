@@ -216,6 +216,7 @@ func (s *Session) doEC2RequestSpotInstances(cli *EC2Client, req PostRequest) {
 		s.Logf("id=%s", *sir.SpotInstanceRequestId)
 		ids = append(ids, *sir.SpotInstanceRequestId)
 	}
+	time.Sleep(time.Second)
 	first := true
 	for {
 		sirs, err = cli.DescribeSpotInstanceRequests(ids)
@@ -230,10 +231,11 @@ func (s *Session) doEC2RequestSpotInstances(cli *EC2Client, req PostRequest) {
 		}
 		fullfilled := true
 		for _, sir := range sirs {
-			if sir.InstanceId == nil {
+			if sir.State == ec2types.SpotInstanceStateOpen {
 				s.Logf("%s is not fullfilled", *sir.SpotInstanceRequestId)
 				fullfilled = false
 			}
+			// active/closed/cancelled/failed
 		}
 		if fullfilled {
 			break
@@ -244,7 +246,13 @@ func (s *Session) doEC2RequestSpotInstances(cli *EC2Client, req PostRequest) {
 	cli.InstanceIds = nil
 	cli.VpcId = nil
 	for _, sir := range sirs {
-		cli.InstanceIds = append(cli.InstanceIds, *sir.InstanceId)
+		if sir.InstanceId != nil {
+			cli.InstanceIds = append(cli.InstanceIds, *sir.InstanceId)
+		}
+	}
+	if len(cli.InstanceIds) == 0 {
+		s.Logf("no activated instances")
+		return
 	}
 	instances, err := cli.DescribeInstances()
 	if err != nil {
